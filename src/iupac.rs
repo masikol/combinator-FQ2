@@ -69,3 +69,82 @@ impl IUPACValidator {
         Ok(())
     }
 }
+
+
+#[cfg(test)]
+mod tests_iupac_validator {
+    use super::*;
+
+    #[test]
+    fn valid_dna_bases_uppercase() {
+        let validator = IUPACValidator::new();
+        assert_eq!(validator.validate(&"ACGT".into()), Ok(()));
+    }
+
+    #[test]
+    fn valid_dna_bases_lowercase() {
+        let validator = IUPACValidator::new();
+        assert_eq!(validator.validate(&"acgt".into()), Ok(()));
+    }
+
+    #[test]
+    fn valid_all_bases_uppercase() {
+        let validator = IUPACValidator::new();
+        assert_eq!(
+            validator.validate(&"ATGCRYSWKMBDHVNU".into()),
+            Ok(())
+        );
+    }
+
+    #[test]
+    fn valid_mixed_case() {
+        let validator = IUPACValidator::new();
+        assert_eq!(validator.validate(&"AtGcRyU".into()), Ok(()));
+    }
+
+    #[test]
+    fn empty_string() {
+        let validator = IUPACValidator::new();
+        assert_eq!(validator.validate(&String::new()), Ok(()));
+    }
+
+    #[test]
+    fn invalid_character_fails() {
+        let validator = IUPACValidator::new();
+        let result = validator.validate(&"ACGF".into());
+        assert_eq!(
+            result,
+            Err("Error: non-IUPAC character encountered: F".to_string())
+        );
+    }
+
+    #[test]
+    fn non_letter_character_fails() {
+        let validator = IUPACValidator::new();
+        let result = validator.validate(&"AC GT".into());
+        assert_eq!(
+            result,
+            Err("Error: non-IUPAC character encountered:  ".to_string())
+        );
+    }
+
+    #[test]
+    fn digit_character_fails() {
+        let validator = IUPACValidator::new();
+        let result = validator.validate(&"AC3T".into());
+        assert_eq!(
+            result,
+            Err("Error: non-IUPAC character encountered: 3".to_string())
+        );
+    }
+
+    #[test]
+    fn nonascii_character_fails() {
+        let validator = IUPACValidator::new();
+        let result = validator.validate(&"ACўT".into());
+        assert_eq!(
+            result,
+            Err("Error: non-IUPAC character encountered: ў".to_string())
+        );
+    }
+}

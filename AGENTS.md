@@ -4,7 +4,7 @@
 
 ```bash
 cargo build
-cargo run
+cargo run -- <fasta_file>
 ```
 
 ## Test
@@ -15,14 +15,38 @@ cargo test
 
 - Rust edition 2024 — requires Rust 1.85+ (stable since 2025-02-20)
 
+## Dependencies
+
+Only `clap` (4.6.1, derive feature) for CLI parsing.
+
 ## Architecture
 
-Single-crate binary (`src/main.rs`). One module: `src/find_overlap.rs` with
-three public functions: `find_overlap_s2s`, `find_overlap_e2s`, `find_overlap_e2e`.
+Single-crate binary (`src/main.rs`). Entrypoint parses CLI args (via `src/args.rs`), reads FASTA (`src/fasta_reader.rs`), and finds sequence overlaps (`src/find_overlap.rs`).
 
-`src/lib.rs` is empty (placeholder for future library API).
+Modules:
+- `args` — clap-based CLI (`-i`/`-a` for k-mer range, `-k` for single k, `-o` for outdir)
+- `iupac` — IUPAC nucleotide code validation
+- `seq_record` — `SeqRecord` struct (name + seq)
+- `fasta_reader` — FASTA iterator with IUPAC validation
+- `find_overlap` — three overlap functions: `find_overlap_s2s`, `find_overlap_e2s`, `find_overlap_e2e`
+- `revcompl` — reverse complement (module currently commented out in `main.rs`, tests exist)
+- `lib.rs` — empty placeholder
 
-## Notes
+`main.rs` still has hardcoded example calls; CLI arg processing is wired up but the overlap functions are not yet called on real parsed data.
 
-- No tests, no CI, no dependencies beyond std
-- The binary prints debug info (k-mer length, slices) to stdout during overlap search
+## Tests
+
+- `find_overlap.rs` has 3 test modules (`tests_s2s`, `tests_e2s`, `tests_e2e`)
+- `revcompl.rs` has 2 test modules (`test_revcompl`, `test_make_compl_base`) — not compiled because `mod revcompl` is commented out
+
+## CLI
+
+```
+combinator_fq2 0.1.0
+By Maksim Sikolenko
+
+A program to find adjacent contigs by matching their ends of length k.
+
+USAGE:
+    combinator_fq2 <INPUT> [-i <mink>] [-a <maxk>] [-k <k-mer>] [-o <outdir>]
+```
