@@ -26,7 +26,11 @@ fn main() -> ExitCode {
         return ExitCode::FAILURE;
     }
 
-    contigs::read_test_fasta(&args.input_fpath);
+    let seq_ecords = contigs::read_test_fasta(&args.input_fpath);
+    if let Err(err_str) = seq_ecords {
+        eprintln!("{}", err_str);
+        return ExitCode::FAILURE;
+    }
 
 
 
