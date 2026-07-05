@@ -175,6 +175,67 @@ mod tests_parse_coverage {
 
 
 #[cfg(test)]
+mod tests_contig_record_from {
+    use super::ContigRecord;
+    use crate::fasta_reader::SeqRecord;
+
+    fn make_seq(name: &str, seq: &str) -> SeqRecord {
+        SeqRecord {
+            name: name.to_string(),
+            seq: seq.to_string(),
+        }
+    }
+
+    #[test]
+    fn standard_spades_header() {
+        let record = ContigRecord::from(
+            make_seq("NODE_1_length_100_cov_50.0", "ACGTACGTAC"),
+            3,
+        ).unwrap();
+        assert_eq!(record.name, "NODE_1_length_100_cov_50.0");
+        assert_eq!(record.length, 10);
+        assert!((record.gc_content - 50.0).abs() < f64::EPSILON);
+        assert_eq!(record.coverage, Some(50.0));
+        assert_eq!(record.start, "ACG");
+        assert_eq!(record.end, "TAC");
+        assert_eq!(record.rcstart, "CGT");
+        assert_eq!(record.rcend, "GTA");
+    }
+
+    #[test]
+    fn non_spades_header() {
+        let record = ContigRecord::from(
+            make_seq("contig1", "GGGGCCCC"),
+            2,
+        ).unwrap();
+        assert_eq!(record.name, "contig1");
+        assert_eq!(record.coverage, None);
+    }
+
+    #[test]
+    fn maxk_equals_seq_len() {
+        let record = ContigRecord::from(
+            make_seq("NODE_1_length_5_cov_10.0", "GATCA"),
+            5,
+        ).unwrap();
+        assert_eq!(record.start, "GATCA");
+        assert_eq!(record.end, "GATCA");
+        assert_eq!(record.rcstart, "TGATC");
+        assert_eq!(record.rcend, "TGATC");
+    }
+
+    #[test]
+    fn non_iupac_character() {
+        let result = ContigRecord::from(
+            make_seq("NODE_1_length_5_cov_10.0", "GATCZ"),
+            3,
+        );
+        assert!(result.is_err());
+    }
+}
+
+
+#[cfg(test)]
 mod tests_calculate_gc_count {
     use super::calculate_gc_count;
 
