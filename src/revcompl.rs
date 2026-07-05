@@ -1,20 +1,5 @@
 
-const ADENINE   : char = 'A';
-const THYMINE   : char = 'T';
-const GUANINE   : char = 'G';
-const CYTOSINE  : char = 'C';
-const PURINE    : char = 'R';
-const PYRIMIDINE: char = 'Y';
-const WEAK      : char = 'W';
-const STRONG    : char = 'S';
-const AMINO     : char = 'M';
-const KETO      : char = 'K';
-const NOT_A     : char = 'B';
-const NOT_C     : char = 'D';
-const NOT_G     : char = 'H';
-const NOT_T     : char = 'V';
-const ANY       : char = 'N';
-const URACIL    : char = 'U';
+use crate::iupac::nucl_bases::*;
 
 
 pub fn revcompl(seq: &String) -> Result<String, char> {

@@ -1,6 +1,9 @@
 
 mod args;
-mod contigs;
+mod iupac;
+mod seq_record;
+mod fasta_reader;
+// mod revcompl;
 mod find_overlap;
 
 
@@ -26,7 +29,7 @@ fn main() -> ExitCode {
         return ExitCode::FAILURE;
     }
 
-    let seq_ecords = contigs::read_test_fasta(&args.input_fpath);
+    let seq_ecords = fasta_reader::read_test_fasta(&args.input_fpath);
     if let Err(err_str) = seq_ecords {
         eprintln!("{}", err_str);
         return ExitCode::FAILURE;

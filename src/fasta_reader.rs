@@ -1,11 +1,10 @@
 
-// TODO: use
-// mod revcompl;
-
-
 use std::fs::File;
 use std::path::PathBuf;
 use std::io::{BufReader, BufRead, Lines, Error as IOError};
+
+use crate::seq_record::SeqRecord;
+use crate::iupac::IUPACValidator;
 
 type FastaLines = Lines<BufReader<File>>;
 
@@ -31,26 +30,11 @@ pub fn read_test_fasta(file_path: &PathBuf) -> Result<(), String> {
 }
 
 
-struct SeqRecord {
-    name: String,
-    seq: String,
-}
-
-// impl SeqRecord {
-//     // TODO: GC content
-//     // TODO: coverage
-//     // TODO: length
-//     // start
-//     // rcstart
-//     // end
-//     // rcend
-// }
-
-
 struct FastaReader {
     file_lines: FastaLines,
     next_header_line: String,
     end_of_file_reached: bool,
+    seq_validator: IUPACValidator,
 }
 
 impl FastaReader {
@@ -76,6 +60,7 @@ impl FastaReader {
             file_lines,
             next_header_line: next_header_line,
             end_of_file_reached: false,
+            seq_validator: IUPACValidator::new()
         };
 
         Ok(reader)
@@ -155,10 +140,16 @@ impl Iterator for FastaReader {
             let first_char = first_char.unwrap();
 
             if first_char != '>' {
-                // TODO: if line contains non-IUPAC chars
+                // Append sequence line to curr_seq
+                if let Err(err_str) = self.seq_validator.validate(&next_line) {
+                    return Some(Err(err_str));
+                }
                 next_line.make_ascii_uppercase();
                 curr_seq.push_str(&next_line);
             } else {
+                // We have reached the next record.
+                // Save it’s header line to self.next_header_line
+                //   and end the loop
                 curr_header_line = self.next_header_line.clone();
                 self.next_header_line = String::from(next_line);
                 next_record_reached = true;
