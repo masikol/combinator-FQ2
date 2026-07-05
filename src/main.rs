@@ -1,5 +1,6 @@
 
 mod args;
+mod contigs;
 mod find_overlap;
 
 
@@ -24,6 +25,10 @@ fn main() -> ExitCode {
     if create_outdir(&args).is_err() {
         return ExitCode::FAILURE;
     }
+
+    contigs::read_test_fasta(&args.input_fpath);
+
+
 
     let overlap: usize = find_overlap_s2s(
         &String::from("AGTCaaaaaaaaa"),
