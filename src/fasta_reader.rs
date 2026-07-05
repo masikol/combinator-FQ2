@@ -3,34 +3,18 @@ use std::fs::File;
 use std::path::PathBuf;
 use std::io::{BufReader, BufRead, Lines, Error as IOError};
 
-use crate::seq_record::SeqRecord;
 use crate::iupac::IUPACValidator;
 
 type FastaLines = Lines<BufReader<File>>;
 
 
-// TODO: remove test func
-pub fn read_test_fasta(file_path: &PathBuf) -> Result<(), String> {
-    let reader = FastaReader::open(file_path);
-    if let Err(error) = reader {
-        return Err(
-            format!("Error. Cannot open fasta file `{}`: {}", file_path.display(), error)
-        );
-    }
-    let reader = reader.unwrap();
-    for data_chunk in reader {
-        match data_chunk {
-            Ok(seq_record) => {
-                println!("Name: `{}`, Seq: `{}`", seq_record.name, seq_record.seq);
-            },
-            Err(err_str) => {return Err(err_str)}
-        }
-    }
-    Ok(())
+pub struct SeqRecord {
+    pub name: String,
+    pub seq: String,
 }
 
 
-struct FastaReader {
+pub struct FastaReader {
     file_lines: FastaLines,
     next_header_line: String,
     end_of_file_reached: bool,
@@ -38,7 +22,7 @@ struct FastaReader {
 }
 
 impl FastaReader {
-    fn open(file_path: &PathBuf) -> Result<FastaReader, String> {
+    pub fn open(file_path: &PathBuf) -> Result<FastaReader, String> {
         let open_result = File::open(file_path);
         if let Err(error) = open_result {
             return Err(

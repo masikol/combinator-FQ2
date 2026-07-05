@@ -1,16 +1,18 @@
 
 mod args;
 mod iupac;
-mod seq_record;
+mod revcompl;
 mod fasta_reader;
-// mod revcompl;
 mod find_overlap;
+mod contig_record;
 
 
 use std::fs;
 use std::process::ExitCode;
 
 use args::Args;
+use fasta_reader::FastaReader;
+use contig_record::ContigRecord;
 use find_overlap::{find_overlap_s2s, find_overlap_e2s, find_overlap_e2e};
 
 
@@ -29,11 +31,19 @@ fn main() -> ExitCode {
         return ExitCode::FAILURE;
     }
 
-    let seq_ecords = fasta_reader::read_test_fasta(&args.input_fpath);
-    if let Err(err_str) = seq_ecords {
+    let contig_records = read_contig_records(&args);
+    if let Err(err_str) = contig_records {
         eprintln!("{}", err_str);
         return ExitCode::FAILURE;
     }
+    let contig_records = contig_records.unwrap();
+
+    println!("{:?}", contig_records);
+
+    for r in contig_records {
+        println!("{:?}", r);
+    }
+
 
 
 
@@ -76,4 +86,47 @@ fn create_outdir(args: &Args) -> Result<(), ()> {
         }
     }
     Ok(())
+}
+
+fn read_contig_records(args: &Args) -> Result<Vec<ContigRecord>, String> {
+
+    let reader = FastaReader::open(&args.input_fpath);
+    if let Err(error) = reader {
+        return Err(
+            format!(
+                "Error. Cannot open fasta file `{}`: {}",
+                args.input_fpath.display(),
+                error
+            )
+        );
+    }
+
+    // TODO: use collect() instead
+    let mut contig_records: Vec<ContigRecord> = Vec::new();
+    let reader = reader.unwrap();
+
+    for seq_record in reader {
+        match seq_record {
+            Ok(seq_record) => {
+                let seq_len = seq_record.seq.len();
+                if seq_len >= args.maxk {
+                    contig_records.push(
+                        ContigRecord::from(seq_record, args.maxk)?
+                    );
+                }
+            },
+            Err(err_str) => {
+                return Err(err_str);
+            }
+        }
+    }
+
+    if contig_records.is_empty() {
+        return Err(format!(
+            "Error: found no input sequences that have length >= {}",
+            args.maxk
+        ));
+    }
+
+    Ok(contig_records)
 }

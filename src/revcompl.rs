@@ -2,7 +2,7 @@
 use crate::iupac::nucl_bases::*;
 
 
-pub fn revcompl(seq: &String) -> Result<String, char> {
+pub fn revcompl(seq: &str) -> Result<String, char> {
     seq.chars()
         .map(make_compl_base)
         .rev()
@@ -41,7 +41,7 @@ mod test_revcompl {
 
     #[test]
     fn ok_revcompl_seq() {
-        let seq      = String::from("WRTYUASDGKCBM");
+        let seq      = "WRTYUASDGKCBM";
         let expected = String::from("KVGMCHSTARAYW");
 
         let revcompl_result = revcompl(&seq);
@@ -56,10 +56,10 @@ mod test_revcompl {
     #[test]
     fn invalid_revcompl_seq() {
         let invalid_char = 'F';
-        let valid_seq    = String::from("WRTYUASDGKCBM");
+        let valid_seq    = "WRTYUASDGKCBM";
         let invalid_seq  = format!("{}{}", valid_seq, invalid_char);
 
-        let revcompl_result = revcompl(&invalid_seq);
+        let revcompl_result = revcompl(&invalid_seq[..]);
         assert_eq!(
             revcompl_result,
             Err(invalid_char),
