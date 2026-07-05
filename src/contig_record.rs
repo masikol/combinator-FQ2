@@ -96,7 +96,7 @@ static SPADES_NAME_REGEX: OnceLock<Regex> = OnceLock::new();
 fn get_spades_name_regex() -> &'static Regex {
     SPADES_NAME_REGEX.get_or_init(
         || Regex::new(
-            r"^NODE_\d+_length_\d+_cov_(\d+\.(\d+)?)"
+            r"^NODE_\d+_length_\d+_cov_(\d+(\.\d+)?)"
         ).unwrap()
     )
 }
@@ -110,6 +110,67 @@ fn parse_coverage(seq_name: &String) -> Option<f64> {
     }
     let coverage = coverage.unwrap();
     Some(coverage)
+}
+
+
+#[cfg(test)]
+mod tests_parse_coverage {
+    use super::parse_coverage;
+
+    #[test]
+    fn standard_spades_header() {
+        assert_eq!(
+            parse_coverage(&"NODE_1_length_100_cov_50.0".into()),
+            Some(50.0)
+        );
+    }
+
+    #[test]
+    fn decimal_coverage() {
+        assert_eq!(
+            parse_coverage(&"NODE_5_length_250_cov_30.75".into()),
+            Some(30.75)
+        );
+    }
+
+    #[test]
+    fn integer_coverage_with_trailing_dot() {
+        assert_eq!(
+            parse_coverage(&"NODE_3_length_50_cov_100.".into()),
+            Some(100.0)
+        );
+    }
+
+    #[test]
+    fn zero_coverage() {
+        assert_eq!(
+            parse_coverage(&"NODE_1_length_100_cov_0.0".into()),
+            Some(0.0)
+        );
+    }
+
+    #[test]
+    fn non_spades_header() {
+        assert_eq!(parse_coverage(&">seq1".into()), None);
+    }
+
+    #[test]
+    fn empty_string() {
+        assert_eq!(parse_coverage(&String::new()), None);
+    }
+
+    #[test]
+    fn missing_cov_part() {
+        assert_eq!(parse_coverage(&"NODE_1_length_100".into()), None);
+    }
+
+    #[test]
+    fn coverage_without_decimal() {
+        assert_eq!(
+            parse_coverage(&"NODE_1_length_100_cov_50".into()),
+            Some(50.0)
+        );
+    }
 }
 
 
