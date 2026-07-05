@@ -58,8 +58,8 @@ impl IUPACValidator {
         }
     }
 
-    pub fn validate(&self, string: &String) -> Result<(), String> {
-        for c in string.chars() {
+    pub fn validate(&self, seq: &String) -> Result<(), String> {
+        for c in seq.chars() {
             if !self.valid_base_set.contains(&c) {
                 return Err(
                     format!("Error: non-IUPAC character encountered: {}", c)

@@ -37,6 +37,9 @@ Modules:
 ## Tests
 
 - `find_overlap.rs` has 3 test modules (`tests_s2s`, `tests_e2s`, `tests_e2e`)
+- `iupac.rs` has 1 test module (`tests_iupac_validator`) — 8 tests
+- `fasta_reader.rs` has 1 test module (`tests_fasta_reader`) — 14 tests
+  - Test fasta files live in `test_data/fasta_reader/*.fasta`
 - `revcompl.rs` has 2 test modules (`test_revcompl`, `test_make_compl_base`) — not compiled because `mod revcompl` is commented out
 
 ## CLI
