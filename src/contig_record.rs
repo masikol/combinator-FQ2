@@ -33,7 +33,7 @@ impl ContigRecord {
         let seq_len = seq_record.seq.len() as usize;
 
         let gc_count = calculate_gc_count(&seq_record.seq);
-        let gc_content = gc_count / (seq_len as f64) * 100.0;
+        let gc_content = calculate_gc_content(gc_count, seq_len);
 
         let coverage = parse_coverage(&seq_record.name);
 
@@ -74,16 +74,20 @@ impl ContigRecord {
 }
 
 
-fn calculate_gc_count(seq: &String) -> f64 {
+fn calculate_gc_count(seq: &String) -> usize {
     let gc_base_set: HashSet<char> = HashSet::from_iter(
         vec![GUANINE, CYTOSINE, STRONG].into_iter()
     );
 
     let gc_count = seq.chars().filter(
         |c| gc_base_set.contains(c)
-    ).count() as f64;
+    ).count();
 
     gc_count
+}
+
+fn calculate_gc_content(gc_count: usize, seq_len: usize) -> f64 {
+    (gc_count as f64) / (seq_len as f64) * 100.0
 }
 
 
@@ -106,4 +110,94 @@ fn parse_coverage(seq_name: &String) -> Option<f64> {
     }
     let coverage = coverage.unwrap();
     Some(coverage)
+}
+
+
+#[cfg(test)]
+mod tests_calculate_gc_count {
+    use super::calculate_gc_count;
+
+    #[test]
+    fn empty_string() {
+        assert_eq!(calculate_gc_count(&String::new()), 0);
+    }
+
+    #[test]
+    fn no_gc_bases() {
+        assert_eq!(calculate_gc_count(&"ATAT".into()), 0);
+    }
+
+    #[test]
+    fn only_gc_bases() {
+        assert_eq!(calculate_gc_count(&"GGCC".into()), 4);
+    }
+
+    #[test]
+    fn mixed_bases() {
+        assert_eq!(calculate_gc_count(&"ACGTS".into()), 3);
+    }
+
+    #[test]
+    fn iupac_s_is_gc() {
+        assert_eq!(calculate_gc_count(&"S".into()), 1);
+    }
+
+    #[test]
+    fn lowercase_not_counted() {
+        assert_eq!(calculate_gc_count(&"gc".into()), 0);
+    }
+
+    #[test]
+    fn no_gc_in_iupac_non_gc() {
+        assert_eq!(calculate_gc_count(&"RYWKM".into()), 0);
+    }
+}
+
+
+#[cfg(test)]
+mod tests_calculate_gc_content {
+    use super::calculate_gc_content;
+
+    #[test]
+    fn zero_gc_count() {
+        let content = calculate_gc_content(0, 100);
+        assert!((content - 0.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn half_gc() {
+        let content = calculate_gc_content(50, 100);
+        assert!((content - 50.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn all_gc() {
+        let content = calculate_gc_content(100, 100);
+        assert!((content - 100.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn quarter_gc() {
+        let content = calculate_gc_content(25, 100);
+        assert!((content - 25.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn odd_length() {
+        let content = calculate_gc_content(3, 9);
+        let one_third: f64 = 1.0 / 3.0 * 100.0;
+        assert!((content - one_third).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn single_base_gc() {
+        let content = calculate_gc_content(1, 1);
+        assert!((content - 100.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn single_base_no_gc() {
+        let content = calculate_gc_content(0, 1);
+        assert!((content - 0.0).abs() < f64::EPSILON);
+    }
 }
