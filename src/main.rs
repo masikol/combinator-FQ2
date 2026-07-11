@@ -2,6 +2,7 @@
 mod args;
 mod iupac;
 mod revcompl;
+mod overlaps;
 mod fasta_reader;
 mod find_overlap;
 mod contig_record;
@@ -13,7 +14,7 @@ use std::process::ExitCode;
 use args::Args;
 use fasta_reader::FastaReader;
 use contig_record::ContigRecord;
-use find_overlap::{find_overlap_s2s, find_overlap_e2s, find_overlap_e2e};
+use overlaps::{OverlapCollection, detect_adjacent_contigs};
 
 
 fn main() -> ExitCode {
@@ -36,40 +37,21 @@ fn main() -> ExitCode {
         eprintln!("{}", err_str);
         return ExitCode::FAILURE;
     }
-    let contig_records = contig_records.unwrap();
+    let contig_records: Vec<ContigRecord> = contig_records.unwrap();
 
     println!("{:?}", contig_records);
 
-    for r in contig_records {
+    for r in &contig_records {
         println!("{:?}", r);
     }
 
-
-
-
-    let overlap: usize = find_overlap_s2s(
-        &String::from("AGTCaaaaaaaaa"),
-        &String::from("AGTCttttttttttttttt"),
-        3,
-        5
-    );
-    println!("overlap = {overlap}");
-
-    let overlap: usize = find_overlap_e2s(
-        &String::from("aaaaaaaaaaAGTC"),
-        &String::from("AGTCttttttttttttt"),
-        3,
-        5
-    );
-    println!("overlap = {overlap}");
-
-    let overlap: usize = find_overlap_e2e(
-        &String::from("aaaaaaaAGTC"),
-        &String::from("tttttttttttttAGTC"),
-        3,
-        5
-    );
-    println!("overlap = {overlap}");
+    let overlaps: OverlapCollection = detect_adjacent_contigs(&contig_records, &args);
+    for (i, ovl_vec) in &overlaps.collection {
+        println!("Overlaps for contig #{:?}", i);
+        for ovl in ovl_vec {
+            println!("{:?}", ovl);
+        }
+    }
 
     ExitCode::SUCCESS
 }
