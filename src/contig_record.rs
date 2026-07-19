@@ -12,6 +12,8 @@ use crate::iupac::nucl_bases::{
 };
 use crate::fasta_reader::SeqRecord;
 
+pub const MULTIPLTY_EPSILON: f64 = 1e-6;
+
 
 #[derive(Debug)]
 pub struct ContigRecord {
@@ -23,6 +25,7 @@ pub struct ContigRecord {
     pub rcstart: String,
     pub end: String,
     pub rcend: String,
+    pub multiplty: Option<f64>,
 }
 
 impl ContigRecord {
@@ -69,7 +72,16 @@ impl ContigRecord {
             rcstart: rcstart.unwrap(),
             end: end,
             rcend: rcend.unwrap(),
+            multiplty: None,
         })
+    }
+
+    pub fn set_multiplty_by_cov(&mut self, first_contig_cov: f64) {
+        if first_contig_cov < MULTIPLTY_EPSILON {
+            panic!("Error: first_contig_cov ({}) is zero or too small", first_contig_cov);
+        }
+        let cov_ratio: f64 = self.coverage.unwrap() / first_contig_cov;
+        self.multiplty = Some(cov_ratio);
     }
 }
 
@@ -321,5 +333,77 @@ mod tests_calculate_gc_content {
     fn single_base_no_gc() {
         let content = calculate_gc_content(0, 1);
         assert!((content - 0.0).abs() < f64::EPSILON);
+    }
+}
+
+
+#[cfg(test)]
+mod tests_set_multiplty_by_cov {
+    use super::*;
+
+    fn make_contig_record(coverage: Option<f64>) -> ContigRecord {
+        ContigRecord {
+            name: "test".to_string(),
+            length: 100,
+            gc_content: 50.0,
+            coverage,
+            multiplty: None,
+            start: String::new(),
+            rcstart: String::new(),
+            end: String::new(),
+            rcend: String::new(),
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn panics_when_coverage_is_none() {
+        let mut record = make_contig_record(None);
+        record.set_multiplty_by_cov(42.0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn panics_when_first_cov_is_zero() {
+        let mut record = make_contig_record(Some(50.0));
+        record.set_multiplty_by_cov(0.0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn panics_when_first_cov_is_very_small() {
+        let mut record = make_contig_record(Some(50.0));
+        let very_small_cov = MULTIPLTY_EPSILON / 10.0;
+        record.set_multiplty_by_cov(very_small_cov);
+    }
+
+    #[test]
+    fn sets_multiplicity_correctly() {
+        let mut record = make_contig_record(Some(50.0));
+        record.set_multiplty_by_cov(25.0);
+        let result = record.multiplty.unwrap();
+        let expected: f64 = 2.0;
+        assert!((result - expected).abs() < f64::EPSILON);
+        assert_eq!(record.multiplty, Some(expected));
+    }
+
+    #[test]
+    fn fractional_multiplicity() {
+        let mut record = make_contig_record(Some(10.0));
+        record.set_multiplty_by_cov(100.0);
+        let result = record.multiplty.unwrap();
+        let expected: f64 = 0.1;
+        assert!((result - expected).abs() < f64::EPSILON);
+        assert_eq!(record.multiplty, Some(expected));
+    }
+
+    #[test]
+    fn equal_coverage() {
+        let mut record = make_contig_record(Some(42.0));
+        record.set_multiplty_by_cov(42.0);
+        let result = record.multiplty.unwrap();
+        let expected: f64 = 1.0;
+        assert!((result - expected).abs() < f64::EPSILON);
+        assert_eq!(record.multiplty, Some(expected));
     }
 }

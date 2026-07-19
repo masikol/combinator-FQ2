@@ -454,6 +454,7 @@ mod tests_detect_adjacent_contigs {
                 rcstart:   "TTTTTTTTTTTTTTTTTTTTTTTTT".to_string(),
                 end:       "CCCCCCCCCCCCCCCCCCCCCCCCC".to_string(),
                 rcend:     "GGGGGGGGGGGGGGGGGGGGGGGGG".to_string(),
+                multiplty: None,
             },
             ContigRecord {
                 name: "b".to_string(),
@@ -464,6 +465,7 @@ mod tests_detect_adjacent_contigs {
                 rcstart:   "HMMMMMMMMMMMMMMMMMMMMMMMM".to_string(),
                 end:       "DWWWWWWWWWWWWWWWWWWWWWWWWW".to_string(),
                 rcend:     "DWWWWWWWWWWWWWWWWWWWWWWWWW".to_string(),
+                multiplty: None,
             },
         ];
         let args = Args {
@@ -490,6 +492,7 @@ mod tests_detect_adjacent_contigs {
                 rcstart:   "TGCTAGCTACGATCGATCGATCGT".to_string(),
                 end:       "ACGATCGATCGATCGTAGCTAGCA".to_string(),
                 rcend:     "TGCTAGCTACGATCGATCGATCGT".to_string(),
+                multiplty: None,
             },
         ];
         let args = Args {
@@ -533,6 +536,7 @@ mod tests_detect_adjacent_contigs {
                 rcstart: "TTTT".to_string(),
                 end: "CCCC".to_string(),
                 rcend: "GGGG".to_string(),
+                multiplty: None,
             },
         ];
         let args = Args {
