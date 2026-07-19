@@ -46,6 +46,26 @@ impl Overlap {
             ovl_len: ovl_len,
         }
     }
+
+    pub fn is_start_match(&self) -> bool {
+        (
+            self.terminus_i == Terminus::Start
+         && self.terminus_j == Terminus::End
+        ) || (
+            self.terminus_i == Terminus::Start
+         && self.terminus_j == Terminus::RcStart
+        )
+    }
+
+    pub fn is_end_match(&self) -> bool {
+        (
+            self.terminus_i == Terminus::End
+         && self.terminus_j == Terminus::Start
+        ) || (
+            self.terminus_i == Terminus::End
+         && self.terminus_j == Terminus::RcEnd
+        )
+    }
 }
 
 impl PartialEq for Overlap {
@@ -97,12 +117,12 @@ impl OverlapCollection {
         }
     }
 
-    // TODO: use
-    // /// Returns a reference to the list of overlaps for a given contig key.
-    // /// Returns an empty slice if the key doesn't exist.
-    // pub fn get(&self, key: &ContigIdx) -> &[Overlap] {
-    //     self.collection.get(key).map_or(&[], |v: &Vec<Overlap>| v.as_slice())
-    // }
+    // TODO: why &ContigIdx?
+    /// Returns a reference to the list of overlaps for a given contig key.
+    /// Returns an empty slice if the key doesn't exist.
+    pub fn get(&self, key: &ContigIdx) -> &[Overlap] {
+        self.collection.get(key).map_or(&[], |v: &Vec<Overlap>| v.as_slice())
+    }
 
     // TODO: use
     // /// Returns the number of contigs in the collection.
@@ -566,5 +586,63 @@ mod tests_detect_adjacent_contigs {
         let overlaps = detect_adjacent_contigs(&contigs, &args);
 
         assert!(overlaps.collection.is_empty());
+    }
+}
+
+
+#[cfg(test)]
+mod tests_overlap_collection_get {
+    use super::*;
+
+    fn make_overlap(contig_i: ContigIdx, contig_j: ContigIdx, ovl_len: usize) -> Overlap {
+        Overlap::new(contig_i, Terminus::End, contig_j, Terminus::Start, ovl_len)
+    }
+
+    #[test]
+    fn get_returns_empty_slice_for_nonexistent_key() {
+        let col = OverlapCollection::new();
+        let result = col.get(&0);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn get_returns_overlaps_for_existing_key() {
+        let mut col = OverlapCollection::new();
+        let ovl1 = make_overlap(0, 1, 10);
+        let ovl2 = make_overlap(0, 2, 20);
+        col.add(0, ovl1);
+        col.add(0, ovl2);
+
+        let result = col.get(&0);
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0], make_overlap(0, 1, 10));
+        assert_eq!(result[1], make_overlap(0, 2, 20));
+    }
+
+    #[test]
+    fn get_returns_all_overlaps_multiple_keys() {
+        let mut col = OverlapCollection::new();
+        let ovl_a = make_overlap(0, 1, 10);
+        let ovl_b = make_overlap(1, 0, 15);
+        col.add(0, ovl_a);
+        col.add(1, ovl_b);
+
+        let result_0 = col.get(&0);
+        assert_eq!(result_0.len(), 1);
+        assert_eq!(result_0[0], make_overlap(0, 1, 10));
+
+        let result_1 = col.get(&1);
+        assert_eq!(result_1.len(), 1);
+        assert_eq!(result_1[0], make_overlap(1, 0, 15));
+    }
+
+    #[test]
+    fn get_does_not_affect_collection() {
+        let mut col = OverlapCollection::new();
+        let ovl = make_overlap(0, 1, 10);
+        col.add(0, ovl);
+
+        let _result = col.get(&0);
+        assert_eq!(col.get(&0).len(), 1);
     }
 }

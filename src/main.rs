@@ -6,6 +6,7 @@ mod overlaps;
 mod fasta_reader;
 mod find_overlap;
 mod contig_record;
+mod assign_multiplicity;
 
 
 use std::fs;
@@ -13,6 +14,7 @@ use std::process::ExitCode;
 
 use args::Args;
 use fasta_reader::FastaReader;
+use assign_multiplicity as amu;
 use contig_record::ContigRecord;
 use overlaps::{OverlapCollection, detect_adjacent_contigs};
 
@@ -32,12 +34,12 @@ fn main() -> ExitCode {
         return ExitCode::FAILURE;
     }
 
-    let contig_records = read_contig_records(&args);
+    let mut contig_records = read_contig_records(&args);
     if let Err(err_str) = contig_records {
         eprintln!("{}", err_str);
         return ExitCode::FAILURE;
     }
-    let contig_records: Vec<ContigRecord> = contig_records.unwrap();
+    let mut contig_records: Vec<ContigRecord> = contig_records.unwrap();
 
     println!("{:?}", contig_records);
 
@@ -52,6 +54,8 @@ fn main() -> ExitCode {
             println!("{:?}", ovl);
         }
     }
+
+    amu::assign_multiplty(&mut contig_records, &overlaps);
 
     ExitCode::SUCCESS
 }
