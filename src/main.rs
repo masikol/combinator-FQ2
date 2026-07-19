@@ -1,6 +1,7 @@
 
 mod args;
 mod iupac;
+mod output;
 mod revcompl;
 mod overlaps;
 mod fasta_reader;
@@ -13,6 +14,7 @@ use std::fs;
 use std::process::ExitCode;
 
 use args::Args;
+use output as out;
 use fasta_reader::FastaReader;
 use assign_multiplicity as amu;
 use contig_record::ContigRecord;
@@ -34,7 +36,7 @@ fn main() -> ExitCode {
         return ExitCode::FAILURE;
     }
 
-    let mut contig_records = read_contig_records(&args);
+    let contig_records = read_contig_records(&args);
     if let Err(err_str) = contig_records {
         eprintln!("{}", err_str);
         return ExitCode::FAILURE;
@@ -56,6 +58,16 @@ fn main() -> ExitCode {
     }
 
     amu::assign_multiplty(&mut contig_records, &overlaps);
+
+    let out_result = out::write_full_log(
+        &contig_records,
+        &overlaps,
+        &args
+    );
+    if let Err(err_str) = out_result {
+        eprintln!("{}", err_str);
+        return ExitCode::FAILURE;
+    }
 
     ExitCode::SUCCESS
 }

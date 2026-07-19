@@ -101,6 +101,7 @@ impl RawArgs {
 
 #[derive(Debug)]
 pub struct Args {
+    // TODO: add -f/force option
     pub mink: usize,
     pub maxk: usize,
     pub input_fpath: PathBuf,

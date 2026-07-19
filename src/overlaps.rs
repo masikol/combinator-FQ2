@@ -12,8 +12,9 @@ use crate::find_overlap::{
 };
 
 
+// TODO: derive?
 #[derive(Debug, PartialEq, Eq, Hash)]
-enum Terminus {
+pub enum Terminus {
     Start,
     End,
     RcStart,
@@ -22,13 +23,14 @@ enum Terminus {
 
 type ContigIdx = usize;
 
+// TODO: derive?
 #[derive(Debug, Eq)]
 pub struct Overlap {
-    contig_i: ContigIdx,
-    terminus_i: Terminus,
-    contig_j: ContigIdx,
-    terminus_j: Terminus,
-    ovl_len: usize,
+    pub contig_i: ContigIdx,
+    pub terminus_i: Terminus,
+    pub contig_j: ContigIdx,
+    pub terminus_j: Terminus,
+    pub ovl_len: usize,
 }
 
 impl Overlap {
