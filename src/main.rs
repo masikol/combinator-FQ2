@@ -69,6 +69,16 @@ fn main() -> ExitCode {
         return ExitCode::FAILURE;
     }
 
+    let out_result = out::write_adjacency_table(
+        &contig_records,
+        &overlaps,
+        &args
+    );
+    if let Err(err_str) = out_result {
+        eprintln!("{}", err_str);
+        return ExitCode::FAILURE;
+    }
+
     ExitCode::SUCCESS
 }
 
