@@ -314,3 +314,133 @@ fn get_match_letter(terminus: &Terminus) -> String {
         Terminus::RcEnd   => String::from("rc_S"),
     }
 }
+
+
+#[cfg(test)]
+mod tests_get_start_matches {
+    use super::*;
+
+    fn make_ovl(ti: Terminus, tj: Terminus) -> Overlap {
+        Overlap {
+            contig_i: 0,
+            terminus_i: ti,
+            contig_j: 1,
+            terminus_j: tj,
+            ovl_len: 10,
+        }
+    }
+
+    #[test]
+    fn returns_only_start_matches() {
+        let overlaps: Vec<Overlap> = vec![
+            make_ovl(Terminus::Start, Terminus::End),
+            make_ovl(Terminus::Start, Terminus::RcStart),
+            make_ovl(Terminus::End, Terminus::Start),
+            make_ovl(Terminus::End, Terminus::RcEnd),
+        ];
+        let result = get_start_matches(&overlaps);
+
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].terminus_i, Terminus::Start);
+        assert_eq!(result[0].terminus_j, Terminus::End);
+        assert_eq!(result[1].terminus_i, Terminus::Start);
+        assert_eq!(result[1].terminus_j, Terminus::RcStart);
+    }
+
+    #[test]
+    fn returns_empty_for_empty_input() {
+        let overlaps: Vec<Overlap> = vec![];
+        let result = get_start_matches(&overlaps);
+
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn returns_empty_when_no_start_matches() {
+        let overlaps: Vec<Overlap> = vec![
+            make_ovl(Terminus::End, Terminus::Start),
+            make_ovl(Terminus::End, Terminus::RcEnd),
+        ];
+        let result = get_start_matches(&overlaps);
+
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn returns_all_when_all_are_start_matches() {
+        let overlaps: Vec<Overlap> = vec![
+            make_ovl(Terminus::Start, Terminus::End),
+            make_ovl(Terminus::Start, Terminus::RcStart),
+        ];
+        let result = get_start_matches(&overlaps);
+
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].terminus_i, Terminus::Start);
+        assert_eq!(result[1].terminus_i, Terminus::Start);
+    }
+}
+
+
+#[cfg(test)]
+mod tests_get_end_matches {
+    use super::*;
+
+    fn make_ovl(ti: Terminus, tj: Terminus) -> Overlap {
+        Overlap {
+            contig_i: 0,
+            terminus_i: ti,
+            contig_j: 1,
+            terminus_j: tj,
+            ovl_len: 10,
+        }
+    }
+
+    #[test]
+    fn returns_only_end_matches() {
+        let overlaps: Vec<Overlap> = vec![
+            make_ovl(Terminus::End, Terminus::Start),
+            make_ovl(Terminus::End, Terminus::RcEnd),
+            make_ovl(Terminus::Start, Terminus::End),
+            make_ovl(Terminus::Start, Terminus::RcStart),
+        ];
+        let result = get_end_matches(&overlaps);
+
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].terminus_i, Terminus::End);
+        assert_eq!(result[0].terminus_j, Terminus::Start);
+        assert_eq!(result[1].terminus_i, Terminus::End);
+        assert_eq!(result[1].terminus_j, Terminus::RcEnd);
+    }
+
+    #[test]
+    fn returns_empty_for_empty_input() {
+        let overlaps: Vec<Overlap> = vec![];
+        let result = get_end_matches(&overlaps);
+
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn returns_empty_when_no_end_matches() {
+        let overlaps: Vec<Overlap> = vec![
+            make_ovl(Terminus::Start, Terminus::End),
+            make_ovl(Terminus::Start, Terminus::RcStart),
+        ];
+        let result = get_end_matches(&overlaps);
+
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn returns_all_when_all_are_end_matches() {
+        let overlaps: Vec<Overlap> = vec![
+            make_ovl(Terminus::End, Terminus::Start),
+            make_ovl(Terminus::End, Terminus::RcEnd),
+        ];
+        let result = get_end_matches(&overlaps);
+
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].terminus_i, Terminus::End);
+        assert_eq!(result[1].terminus_i, Terminus::End);
+    }
+}
