@@ -7,6 +7,7 @@ mod overlaps;
 mod fasta_reader;
 mod find_overlap;
 mod contig_record;
+mod cov_summarizer;
 mod assign_multiplicity;
 
 
@@ -59,6 +60,7 @@ fn main() -> ExitCode {
 
     amu::assign_multiplty(&mut contig_records, &overlaps);
 
+    // Write full matching log
     let out_result = out::write_full_log(
         &contig_records,
         &overlaps,
@@ -69,7 +71,19 @@ fn main() -> ExitCode {
         return ExitCode::FAILURE;
     }
 
+    // Write adjacency table
     let out_result = out::write_adjacency_table(
+        &contig_records,
+        &overlaps,
+        &args
+    );
+    if let Err(err_str) = out_result {
+        eprintln!("{}", err_str);
+        return ExitCode::FAILURE;
+    }
+
+    // Write summary
+    let out_result = out::write_summary(
         &contig_records,
         &overlaps,
         &args

@@ -6,6 +6,7 @@ use std::io::{Write, BufWriter};
 
 use crate::args::Args;
 use crate::contig_record::ContigRecord;
+use crate::cov_summarizer::CovSummarizer;
 use crate::overlaps::{Terminus, Overlap, OverlapCollection};
 
 
@@ -313,6 +314,176 @@ fn get_match_letter(terminus: &Terminus) -> String {
         Terminus::RcStart => String::from("rc_S"),
         Terminus::RcEnd   => String::from("rc_S"),
     }
+}
+
+pub fn write_summary(contig_collection: &Vec<ContigRecord>,
+                     overlap_collection: &OverlapCollection,
+                     args: &Args) -> Result<(), String> {
+    // Make path to adjacency table file
+    let summary_fpath: PathBuf = args.outdir_path.join(
+        "combinator_summary_FQ.txt"
+    );
+
+    println!("Writing summary to {:?}", summary_fpath);
+
+    let file = File::create(&summary_fpath);
+    if file.is_err() {
+        return Err(format!(
+            "Error: cannot open file `{:?}` for writing", &summary_fpath
+        ));
+    }
+    let mut writer = BufWriter::new(file.unwrap());
+
+    let out_lines = make_summary_lines(
+        contig_collection,
+        overlap_collection,
+        args
+    );
+
+    for line in out_lines {
+        println!("{}", line);
+        let write_result = writeln!(writer, "{}", line);
+        if let Err(err) = write_result {
+            return Err(format!(
+                "Error: failed to write to file `{:?}`: {}",
+                summary_fpath,
+                err
+            ));
+        }
+    }
+
+    // # Median coverage
+    // median_coverage: float = cov_calc.calc_median_coverage()
+    // wrk_str = 'Median coverage: {}'\
+    //     .format(median_coverage if not median_coverage is None else 'NA')
+    // _double_write(wrk_str, outfile)
+
+    // # LQ coefficient
+    // wrk_str = 'LQ-coefficient: {}'\
+    //     .format(sts.calc_lq_coef(contig_collection, overlap_collection))
+    // _double_write(wrk_str, outfile)
+
+    Ok(())
+}
+
+fn make_summary_lines(contig_collection: &Vec<ContigRecord>,
+                      overlap_collection: &OverlapCollection,
+                      args: &Args) -> Vec<String> {
+    let mut out_lines: Vec<String> = Vec::with_capacity(10);
+
+    // Path to input file
+    out_lines.push(format!(
+        "Input file: {:?}\n", args.input_fpath
+    ));
+
+    // Summary with some statistics
+    out_lines.push(
+        String::from(" === Summary ===")
+    );
+
+    // Number of contigs processed:
+    out_lines.push(format!(
+        "{} contigs were processed.", contig_collection.len()
+    ));
+
+    // Sum of contigs' lengths
+    out_lines.push(format!(
+        "Sum of contig lengths: {} bp",
+        calc_sum_contig_lengths(contig_collection)
+    ));
+
+    // Expected length of the genome
+    out_lines.push(format!(
+        "Expected genome size: {} bp",
+        calc_exp_genome_size(contig_collection, overlap_collection)
+    ));
+
+    // Create a coverage summarizer
+    let cov_summarizer = CovSummarizer::from(contig_collection);
+
+    // Min coverage
+    out_lines.push(format!(
+        "Min coverage: {}",
+        cov_summarizer.min_str()
+    ));
+
+    // Max coverage
+    out_lines.push(format!(
+        "Max coverage: {}",
+        cov_summarizer.max_str()
+    ));
+
+    // Mean coverage
+    out_lines.push(format!(
+        "Mean coverage: {}",
+        cov_summarizer.mean_str()
+    ));
+
+    // Median coverage
+    out_lines.push(format!(
+        "Median coverage: {}",
+        cov_summarizer.median_str()
+    ));
+
+    out_lines
+}
+
+fn calc_sum_contig_lengths(contig_collection: &Vec<ContigRecord>) -> usize {
+    contig_collection.iter().map(
+        |contig| contig.length
+    ).sum()
+}
+
+fn calc_exp_genome_size(contig_collection: &Vec<ContigRecord>,
+                        overlap_collection: &OverlapCollection) -> usize {
+    let sum_overlap_len = calc_sum_overlap_len(
+        contig_collection,
+        overlap_collection
+    );
+
+    contig_collection.iter().map(
+        |contig| contig.length * contig.multiplty.unwrap().round() as usize
+    ).sum::<usize>() - sum_overlap_len
+}
+
+fn calc_sum_overlap_len(contig_collection: &Vec<ContigRecord>,
+                        overlap_collection: &OverlapCollection) -> usize {
+    // TODO: Stub
+    let mut total_overlap_len: usize = 0;
+
+    for (i, contig) in contig_collection.iter().enumerate() {
+        let start_ovls = get_start_matches(overlap_collection.get(&i));
+        let end_ovls   = get_end_matches(overlap_collection.get(&i));
+        let multiplty = contig.multiplty.unwrap().round() as usize;
+        let not_already_counted = |ovl: &&Overlap| ovl.contig_j >= i;
+
+        let mut ovls_to_add: Vec<&Overlap>;
+
+        for ovl_vector in [start_ovls, end_ovls] {
+            if ovl_vector.len() <= multiplty {
+                // No extra overlaps.
+                // We will just add lengths of overlaps to `total_overlap_len`.
+                ovls_to_add = ovl_vector.into_iter()
+                    .filter(not_already_counted)
+                    .collect();
+            } else {
+                // Some extra overlaps discovered.
+                // We will consider only M longest overlaps,
+                //   where M is contig's multiplicity.
+                ovls_to_add = ovl_vector.into_iter()
+                    .filter(not_already_counted)
+                    .collect();
+                ovls_to_add.sort_by_key(|overlap| overlap.ovl_len);
+                ovls_to_add.reverse();
+                ovls_to_add.truncate(multiplty);
+            }
+            total_overlap_len += ovls_to_add.iter().map(
+                |ovl| ovl.ovl_len
+            ).sum::<usize>();
+        }
+    }
+
+    total_overlap_len
 }
 
 
