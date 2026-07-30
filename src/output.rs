@@ -352,17 +352,6 @@ pub fn write_summary(contig_collection: &Vec<ContigRecord>,
         }
     }
 
-    // # Median coverage
-    // median_coverage: float = cov_calc.calc_median_coverage()
-    // wrk_str = 'Median coverage: {}'\
-    //     .format(median_coverage if not median_coverage is None else 'NA')
-    // _double_write(wrk_str, outfile)
-
-    // # LQ coefficient
-    // wrk_str = 'LQ-coefficient: {}'\
-    //     .format(sts.calc_lq_coef(contig_collection, overlap_collection))
-    // _double_write(wrk_str, outfile)
-
     Ok(())
 }
 
@@ -383,7 +372,7 @@ fn make_summary_lines(contig_collection: &Vec<ContigRecord>,
 
     // Number of contigs processed:
     out_lines.push(format!(
-        "{} contigs were processed.", contig_collection.len()
+        "{} contigs.", contig_collection.len()
     ));
 
     // Sum of contigs' lengths
@@ -425,6 +414,12 @@ fn make_summary_lines(contig_collection: &Vec<ContigRecord>,
         cov_summarizer.median_str()
     ));
 
+    // LQ coefficient
+    out_lines.push(format!(
+        "LQ coefficient: {:.2}",
+        calc_lq_coef(contig_collection, overlap_collection)
+    ));
+
     out_lines
 }
 
@@ -448,7 +443,6 @@ fn calc_exp_genome_size(contig_collection: &Vec<ContigRecord>,
 
 fn calc_sum_overlap_len(contig_collection: &Vec<ContigRecord>,
                         overlap_collection: &OverlapCollection) -> usize {
-    // TODO: Stub
     let mut total_overlap_len: usize = 0;
 
     for (i, contig) in contig_collection.iter().enumerate() {
@@ -484,6 +478,45 @@ fn calc_sum_overlap_len(contig_collection: &Vec<ContigRecord>,
     }
 
     total_overlap_len
+}
+
+fn calc_lq_coef(contig_collection: &Vec<ContigRecord>,
+                overlap_collection: &OverlapCollection) -> f64 {
+    // The function calculates LQ-coefficient for given contigs.
+
+    // Number of termini of a contig
+    let num_contig_termini: usize = 2;
+    // Total number of dead ends taking account of multiplicity
+    let mut total_dead_ends: usize = 0;
+
+    let num_cotigs: usize = contig_collection.len();
+
+    for i in 0..num_cotigs {
+        // Count overlaps associated with start
+        let num_start_overlaps: usize = overlap_collection.get(&i)
+            .iter()
+            .filter(|ovl| is_start_match(ovl)) // TODO: or simply is_start_match?
+            .count();
+        // Count overlaps associated with end
+        let num_end_overlaps: usize = overlap_collection.get(&i)
+            .iter()
+            .filter(|ovl| is_end_match(ovl)) // TODO: or simply is_start_match?
+            .count();
+
+        let num_dead_ends: usize = 2
+            - num_start_overlaps.min(1)
+            - num_end_overlaps.min(1);
+        total_dead_ends += num_dead_ends;
+    }
+
+    // Total number of termini taking account of multiplicity
+    let num_total_termini: usize = num_contig_termini * num_cotigs;
+
+    // Calculate and return LQ coefficient
+    (
+        1.0
+        - total_dead_ends as f64 / num_total_termini as f64
+    ) * 100.0
 }
 
 
