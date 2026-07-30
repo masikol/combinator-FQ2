@@ -44,19 +44,7 @@ fn main() -> ExitCode {
     }
     let mut contig_records: Vec<ContigRecord> = contig_records.unwrap();
 
-    println!("{:?}", contig_records);
-
-    for r in &contig_records {
-        println!("{:?}", r);
-    }
-
     let overlaps: OverlapCollection = detect_adjacent_contigs(&contig_records, &args);
-    for (i, ovl_vec) in &overlaps.collection {
-        println!("Overlaps for contig #{:?}", i);
-        for ovl in ovl_vec {
-            println!("{:?}", ovl);
-        }
-    }
 
     amu::assign_multiplty(&mut contig_records, &overlaps);
 
@@ -123,7 +111,6 @@ fn read_contig_records(args: &Args) -> Result<Vec<ContigRecord>, String> {
         );
     }
 
-    // TODO: use collect() instead
     let mut contig_records: Vec<ContigRecord> = Vec::new();
     let reader = reader.unwrap();
 

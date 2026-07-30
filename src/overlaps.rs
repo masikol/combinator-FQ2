@@ -154,7 +154,8 @@ pub fn detect_adjacent_contigs(contigs: &Vec<ContigRecord>,
     let mut overlaps = OverlapCollection::new();
 
     // Init makeshift status bar
-    print!("\n{}/{}", 0, num_contigs);
+    println!("Searching for overlaps between contigs...");
+    print!("{}/{}", 0, num_contigs);
     io::stdout().flush().unwrap();
 
     for i in 0..num_contigs {
@@ -253,7 +254,7 @@ pub fn detect_adjacent_contigs(contigs: &Vec<ContigRecord>,
         io::stdout().flush().unwrap();
     }
 
-    println!("");
+    println!("\n");
 
     overlaps
 }

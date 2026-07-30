@@ -1,4 +1,5 @@
 
+use std::fmt;
 use std::path::PathBuf;
 
 use clap::Parser;
@@ -99,7 +100,6 @@ impl RawArgs {
 }
 
 
-#[derive(Debug)]
 pub struct Args {
     // TODO: add -f/force option
     pub mink: usize,
@@ -130,5 +130,19 @@ impl Args {
             input_fpath: PathBuf::from(&raw_args.input_fpath),
             outdir_path: PathBuf::from(&raw_args.outdir_path),
         })
+    }
+}
+
+impl fmt::Debug for Args {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let fmt_str: String = vec![
+            String::from("=== Run parameters ==="),
+            format!("  mink: {}", self.mink),
+            format!("  maxk: {}", self.maxk),
+            format!("  Input file: {:?}", self.input_fpath),
+            format!("  Output firectory: {:?}", self.outdir_path),
+            "-".repeat(20),
+        ].join("\n");
+        write!(f, "{}\n", fmt_str)
     }
 }

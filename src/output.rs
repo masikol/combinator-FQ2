@@ -340,6 +340,7 @@ pub fn write_summary(contig_collection: &Vec<ContigRecord>,
         args
     );
 
+    println!("");
     for line in out_lines {
         println!("{}", line);
         let write_result = writeln!(writer, "{}", line);
@@ -360,15 +361,15 @@ fn make_summary_lines(contig_collection: &Vec<ContigRecord>,
                       args: &Args) -> Vec<String> {
     let mut out_lines: Vec<String> = Vec::with_capacity(10);
 
-    // Path to input file
-    out_lines.push(format!(
-        "Input file: {:?}\n", args.input_fpath
-    ));
-
     // Summary with some statistics
     out_lines.push(
-        String::from(" === Summary ===")
+        String::from("=== Summary ===")
     );
+
+    // Path to input file
+    out_lines.push(format!(
+        "Input file: {:?}", args.input_fpath
+    ));
 
     // Number of contigs processed:
     out_lines.push(format!(
@@ -419,6 +420,9 @@ fn make_summary_lines(contig_collection: &Vec<ContigRecord>,
         "LQ coefficient: {:.2}",
         calc_lq_coef(contig_collection, overlap_collection)
     ));
+    out_lines.push(
+        "-".repeat(20)
+    );
 
     out_lines
 }

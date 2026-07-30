@@ -86,3 +86,226 @@ fn median(vec: &Vec<f64>) -> f64 {
         return vec_sorted[median_val_idx];
     }
 }
+
+
+#[cfg(test)]
+mod tests_min_str {
+    use super::*;
+
+    fn make_contig(cov: Option<f64>) -> ContigRecord {
+        ContigRecord {
+            name: "t".into(),
+            length: 10,
+            gc_content: 50.0,
+            coverage: cov,
+            start: "AAAAAAAAAA".into(),
+            rcstart: "TTTTTTTTTT".into(),
+            end: "CCCCCCCCCC".into(),
+            rcend: "GGGGGGGGGG".into(),
+            multiplty: None,
+        }
+    }
+
+    #[test]
+    fn empty_returns_na() {
+        let records = vec![make_contig(None)];
+        let summarizer = CovSummarizer::from(&records);
+        assert_eq!(summarizer.min_str(), "NA");
+    }
+
+    #[test]
+    fn single_element() {
+        let records = vec![make_contig(Some(42.5))];
+        let summarizer = CovSummarizer::from(&records);
+        assert_eq!(summarizer.min_str(), "42.50");
+    }
+
+    #[test]
+    fn picks_minimum() {
+        let records = vec![
+            make_contig(Some(10.0)),
+            make_contig(Some(5.0)),
+            make_contig(Some(20.0)),
+        ];
+        let summarizer = CovSummarizer::from(&records);
+        assert_eq!(summarizer.min_str(), "5.00");
+    }
+}
+
+
+#[cfg(test)]
+mod tests_max_str {
+    use super::*;
+
+    fn make_contig(cov: Option<f64>) -> ContigRecord {
+        ContigRecord {
+            name: "t".into(),
+            length: 10,
+            gc_content: 50.0,
+            coverage: cov,
+            start: "AAAAAAAAAA".into(),
+            rcstart: "TTTTTTTTTT".into(),
+            end: "CCCCCCCCCC".into(),
+            rcend: "GGGGGGGGGG".into(),
+            multiplty: None,
+        }
+    }
+
+    #[test]
+    fn empty_returns_na() {
+        let records = vec![make_contig(None)];
+        let summarizer = CovSummarizer::from(&records);
+        assert_eq!(summarizer.max_str(), "NA");
+    }
+
+    #[test]
+    fn single_element() {
+        let records = vec![make_contig(Some(42.5))];
+        let summarizer = CovSummarizer::from(&records);
+        assert_eq!(summarizer.max_str(), "42.50");
+    }
+
+    #[test]
+    fn picks_maximum() {
+        let records = vec![
+            make_contig(Some(10.0)),
+            make_contig(Some(5.0)),
+            make_contig(Some(20.0)),
+        ];
+        let summarizer = CovSummarizer::from(&records);
+        assert_eq!(summarizer.max_str(), "20.00");
+    }
+}
+
+
+#[cfg(test)]
+mod tests_mean_str {
+    use super::*;
+
+    fn make_contig(cov: Option<f64>) -> ContigRecord {
+        ContigRecord {
+            name: "t".into(),
+            length: 10,
+            gc_content: 50.0,
+            coverage: cov,
+            start: "AAAAAAAAAA".into(),
+            rcstart: "TTTTTTTTTT".into(),
+            end: "CCCCCCCCCC".into(),
+            rcend: "GGGGGGGGGG".into(),
+            multiplty: None,
+        }
+    }
+
+    #[test]
+    fn empty_returns_na() {
+        let records = vec![make_contig(None)];
+        let summarizer = CovSummarizer::from(&records);
+        assert_eq!(summarizer.mean_str(), "NA");
+    }
+
+    #[test]
+    fn single_element() {
+        let records = vec![make_contig(Some(42.5))];
+        let summarizer = CovSummarizer::from(&records);
+        assert_eq!(summarizer.mean_str(), "42.50");
+    }
+
+    #[test]
+    fn two_elements() {
+        let records = vec![
+            make_contig(Some(10.0)),
+            make_contig(Some(20.0)),
+        ];
+        let summarizer = CovSummarizer::from(&records);
+        assert_eq!(summarizer.mean_str(), "15.00");
+    }
+
+    #[test]
+    fn four_elements() {
+        let records = vec![
+            make_contig(Some(1.0)),
+            make_contig(Some(2.0)),
+            make_contig(Some(3.0)),
+            make_contig(Some(4.0)),
+        ];
+        let summarizer = CovSummarizer::from(&records);
+        assert_eq!(summarizer.mean_str(), "2.50");
+    }
+
+    #[test]
+    fn filters_none() {
+        let records = vec![
+            make_contig(None),
+            make_contig(Some(42.5)),
+        ];
+        let summarizer = CovSummarizer::from(&records);
+        assert_eq!(summarizer.mean_str(), "42.50");
+    }
+}
+
+
+#[cfg(test)]
+mod tests_median_str {
+    use super::*;
+
+    fn make_contig(cov: Option<f64>) -> ContigRecord {
+        ContigRecord {
+            name: "t".into(),
+            length: 10,
+            gc_content: 50.0,
+            coverage: cov,
+            start: "AAAAAAAAAA".into(),
+            rcstart: "TTTTTTTTTT".into(),
+            end: "CCCCCCCCCC".into(),
+            rcend: "GGGGGGGGGG".into(),
+            multiplty: None,
+        }
+    }
+
+    #[test]
+    fn empty_returns_na() {
+        let records = vec![make_contig(None)];
+        let summarizer = CovSummarizer::from(&records);
+        assert_eq!(summarizer.median_str(), "NA");
+    }
+
+    #[test]
+    fn single_element() {
+        let records = vec![make_contig(Some(42.5))];
+        let summarizer = CovSummarizer::from(&records);
+        assert_eq!(summarizer.median_str(), "42.50");
+    }
+
+    #[test]
+    fn odd_count() {
+        let records = vec![
+            make_contig(Some(3.0)),
+            make_contig(Some(1.0)),
+            make_contig(Some(2.0)),
+        ];
+        let summarizer = CovSummarizer::from(&records);
+        assert_eq!(summarizer.median_str(), "2.00");
+    }
+
+    #[test]
+    fn even_count() {
+        let records = vec![
+            make_contig(Some(4.0)),
+            make_contig(Some(1.0)),
+            make_contig(Some(3.0)),
+            make_contig(Some(2.0)),
+        ];
+        let summarizer = CovSummarizer::from(&records);
+        assert_eq!(summarizer.median_str(), "2.50");
+    }
+
+    #[test]
+    fn filters_none() {
+        let records = vec![
+            make_contig(None),
+            make_contig(Some(42.5)),
+        ];
+        let summarizer = CovSummarizer::from(&records);
+        assert_eq!(summarizer.median_str(), "42.50");
+    }
+}
