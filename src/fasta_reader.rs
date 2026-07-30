@@ -3,9 +3,12 @@ use std::fs::File;
 use std::path::PathBuf;
 use std::io::{BufReader, BufRead, Lines, Error as IOError};
 
+use flate2::read::MultiGzDecoder;
+
 use crate::iupac::IUPACValidator;
 
-type FastaLines = Lines<BufReader<File>>;
+
+type FastaLines = Lines<Box<dyn BufRead>>;
 
 
 pub struct SeqRecord {
@@ -23,20 +26,23 @@ pub struct FastaReader {
 
 impl FastaReader {
     pub fn open(file_path: &PathBuf) -> Result<FastaReader, String> {
-        let open_result = File::open(file_path);
-        if let Err(error) = open_result {
-            return Err(
-                format!(
-                    "Problem opening the file `{}`: {:?}",
-                    file_path.display(),
-                    error
-                )
-            );
-        }
+        let file = File::open(file_path).map_err(|e| {
+            format!(
+                "Problem opening the file `{}`: {:?}",
+                file_path.display(),
+                e
+            )
+        })?;
 
-        let mut file_lines = BufReader::new(
-            open_result.unwrap()
-        ).lines();
+        let is_gzipped = file_path.to_string_lossy().ends_with(".gz");
+
+        let buf_read: Box<dyn BufRead> = if is_gzipped {
+            Box::new(BufReader::new(MultiGzDecoder::new(file)))
+        } else {
+            Box::new(BufReader::new(file))
+        };
+
+        let mut file_lines = buf_read.lines();
 
         let next_header_line = FastaReader::read_first_line(&mut file_lines)?;
 
@@ -261,5 +267,45 @@ mod tests_fasta_reader {
         let mut reader = FastaReader::open(&test_path("second_header_empty.fasta")).unwrap();
         assert!(reader.next().unwrap().is_ok());
         assert!(reader.next().unwrap().is_err());
+    }
+
+    // ===== Gzip tests =====
+
+    #[test]
+    fn valid_single_seq_gz() {
+        let records = collect_records(&test_path("single_seq.fasta.gz"));
+        assert!(records.is_ok());
+    }
+
+    #[test]
+    fn valid_single_seq_multi_line_gz() {
+        let records = collect_records(&test_path("single_seq_multi_line.fasta.gz"));
+        assert!(records.is_ok());
+    }
+
+    #[test]
+    fn valid_two_seqs_gz() {
+        let records = collect_records(&test_path("two_seqs.fasta.gz"));
+        assert!(records.is_ok());
+    }
+
+    #[test]
+    fn gz_content_matches_plaintext() {
+        let plain = collect_records(&test_path("single_seq.fasta")).unwrap();
+        let gzipped = collect_records(&test_path("single_seq.fasta.gz")).unwrap();
+
+        assert_eq!(plain.len(), gzipped.len());
+        assert_eq!(plain[0].name, gzipped[0].name);
+        assert_eq!(plain[0].seq, gzipped[0].seq);
+    }
+
+    #[test]
+    fn invalid_empty_file_gz() {
+        assert!(FastaReader::open(&test_path("empty.fasta.gz")).is_err());
+    }
+
+    #[test]
+    fn invalid_no_leading_gt_gz() {
+        assert!(FastaReader::open(&test_path("no_leading_gt.fasta.gz")).is_err());
     }
 }
