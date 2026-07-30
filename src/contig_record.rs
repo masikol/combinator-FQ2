@@ -1,8 +1,5 @@
 
-use std::sync::OnceLock;
 use std::collections::HashSet;
-
-use regex::Regex;
 
 use crate::revcompl::revcompl;
 use crate::iupac::nucl_bases::{
@@ -11,6 +8,7 @@ use crate::iupac::nucl_bases::{
     STRONG,
 };
 use crate::fasta_reader::SeqRecord;
+use crate::spades::get_spades_name_regex;
 
 pub const MULTIPLTY_EPSILON: f64 = 1e-6;
 
@@ -107,19 +105,10 @@ fn calculate_gc_content(gc_count: usize, seq_len: usize) -> f64 {
 }
 
 
-static SPADES_NAME_REGEX: OnceLock<Regex> = OnceLock::new();
-
-fn get_spades_name_regex() -> &'static Regex {
-    SPADES_NAME_REGEX.get_or_init(
-        || Regex::new(
-            r"^NODE_\d+_length_\d+_cov_(\d+(\.\d+)?)"
-        ).unwrap()
-    )
-}
 
 fn parse_coverage(seq_name: &String) -> Option<f64> {
     let re = get_spades_name_regex();
-    let capture = re.captures(seq_name)?.get(1)?;
+    let capture = re.captures(seq_name)?.get(2)?;
     let coverage: Result<f64, _> = capture.as_str().parse();
     if coverage.is_err() {
         panic!("Error: failed to parse coverage from header `{}`", seq_name);

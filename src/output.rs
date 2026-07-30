@@ -4,9 +4,12 @@ use std::path::PathBuf;
 use std::collections::HashMap;
 use std::io::{Write, BufWriter};
 
+use regex;
+
 use crate::args::Args;
 use crate::contig_record::ContigRecord;
 use crate::cov_summarizer::CovSummarizer;
+use crate::spades::get_spades_name_regex;
 use crate::overlaps::{Terminus, Overlap, OverlapCollection};
 
 
@@ -83,10 +86,10 @@ fn get_overlap_strings_for_log(contig_collection: &Vec<ContigRecord>,
             // Convert and append
             let fmt_str = format!(
                 "{}: {} matches {} of {} with overlap of {} bp",
-                contig_collection[key].name,
+                shorten_name(&contig_collection[key].name),
                 word1,
                 word2,
-                contig_collection[ovl.contig_j].name,
+                shorten_name(&contig_collection[ovl.contig_j].name),
                 ovl.ovl_len
             );
             match_strings.push(fmt_str);
@@ -95,7 +98,7 @@ fn get_overlap_strings_for_log(contig_collection: &Vec<ContigRecord>,
                 // Contig is circular
                 let fmt_str = format!(
                     "{}: contig is circular with overlap of {} bp",
-                    contig_collection[key].name,
+                    shorten_name(&contig_collection[key].name),
                     ovl.ovl_len
                 );
                 match_strings.push(fmt_str);
@@ -103,7 +106,7 @@ fn get_overlap_strings_for_log(contig_collection: &Vec<ContigRecord>,
                 // Start of contig matches it's own reverse-complement end
                 let fmt_str = format!(
                     "{}: start is identical to it's own rc-end with overlap of {} bp",
-                    contig_collection[key].name,
+                    shorten_name(&contig_collection[key].name),
                     ovl.ovl_len
                 );
                 match_strings.push(fmt_str);
@@ -126,6 +129,23 @@ fn make_key2word_map() -> HashMap<Terminus, String> {
     key2word_map.insert(Terminus::RcEnd,   String::from("rc-end"));
 
     key2word_map
+}
+
+fn shorten_name(name: &String) -> String {
+    let re = get_spades_name_regex();
+    let capture: Option<regex::Captures> = re.captures(name);
+
+    if capture.is_none() {
+        return name.to_string();
+    }
+    let capture: regex::Captures = capture.unwrap();
+
+    let group: Option<regex::Match> = capture.get(1);
+    if group.is_none() {
+        return name.to_string();
+    }
+
+    group.unwrap().as_str().to_string()
 }
 
 
@@ -173,7 +193,7 @@ pub fn write_adjacency_table(contig_collection: &Vec<ContigRecord>,
 
         let out_values: Vec<String> = vec![
             format!("{}", i + 1),
-            format!("{}", contig.name),
+            format!("{}", shorten_name(&contig.name)),
             format!("{}", contig.length),
             cov_str,
             format!("{:.2}", contig.gc_content),
@@ -261,7 +281,7 @@ fn get_overlap_str_for_table(overlap_collection: &OverlapCollection,
             ovl_strings.push(format!("[{}={}({}); ovl={}]",
                 letter_i,
                 letter_j,
-                contig_collection[ovl.contig_j].name,
+                shorten_name(&contig_collection[ovl.contig_j].name),
                 ovl.ovl_len
             ));
         } else {
@@ -312,7 +332,7 @@ fn get_match_letter(terminus: &Terminus) -> String {
         Terminus::Start   => String::from("S"),
         Terminus::End     => String::from("E"),
         Terminus::RcStart => String::from("rc_S"),
-        Terminus::RcEnd   => String::from("rc_S"),
+        Terminus::RcEnd   => String::from("rc_E"),
     }
 }
 

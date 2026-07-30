@@ -1,6 +1,7 @@
 
 mod args;
 mod iupac;
+mod spades;
 mod output;
 mod revcompl;
 mod overlaps;
