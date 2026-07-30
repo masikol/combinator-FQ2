@@ -126,18 +126,6 @@ impl OverlapCollection {
         self.collection.get(key).map_or(&[], |v: &Vec<Overlap>| v.as_slice())
     }
 
-    // TODO: use
-    // /// Returns the number of contigs in the collection.
-    // pub fn len(&self) -> usize {
-    //     self.collection.len()
-    // }
-
-    // TODO: use
-    // /// Returns true if the collection is empty.
-    // pub fn is_empty(&self) -> bool {
-    //     self.collection.is_empty()
-    // }
-
     /// Adds an overlap to the collection for the given key.
     /// Creates a new list if the key doesn't exist yet.
     pub fn add(&mut self, key: ContigIdx, overlap: Overlap) {
@@ -266,7 +254,7 @@ mod tests_detect_adjacent_contigs {
     use std::collections::HashSet;
 
     use crate::args::Args;
-    use crate::fasta_reader::{FastaReader, SeqRecord};
+    use crate::fasta_reader::FastaReader;
     use crate::contig_record::ContigRecord;
     use super::*;
 

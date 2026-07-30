@@ -652,3 +652,132 @@ mod tests_get_end_matches {
         assert_eq!(result[1].terminus_i, Terminus::End);
     }
 }
+
+
+#[cfg(test)]
+mod tests_calc_lq_coef {
+    use super::*;
+
+    fn make_contig() -> ContigRecord {
+        ContigRecord {
+            name: "t".into(),
+            length: 10,
+            gc_content: 50.0,
+            coverage: None,
+            start: "AAAAAAAAAA".into(),
+            rcstart: "TTTTTTTTTT".into(),
+            end: "CCCCCCCCCC".into(),
+            rcend: "GGGGGGGGGG".into(),
+            multiplty: None,
+        }
+    }
+
+    fn start_match(contig_i: usize, contig_j: usize) -> Overlap {
+        Overlap {
+            contig_i: contig_i,
+            terminus_i: Terminus::Start,
+            contig_j: contig_j,
+            terminus_j: Terminus::End,
+            ovl_len: 10,
+        }
+    }
+
+    fn end_match(contig_i: usize, contig_j: usize) -> Overlap {
+        Overlap {
+            contig_i: contig_i,
+            terminus_i: Terminus::End,
+            contig_j: contig_j,
+            terminus_j: Terminus::Start,
+            ovl_len: 10,
+        }
+    }
+
+    #[test]
+    fn no_overlaps_single_contig() {
+        let contigs = vec![make_contig()];
+        let overlaps = OverlapCollection::new();
+
+        let result = calc_lq_coef(&contigs, &overlaps);
+        let expected = 0.00;
+
+        assert!((result - expected).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn only_start_matched() {
+        let contigs = vec![make_contig()];
+        let mut overlaps = OverlapCollection::new();
+        overlaps.add(0, start_match(0, 1));
+
+        let result = calc_lq_coef(&contigs, &overlaps);
+        let expected = 50.00;
+
+        assert!((result - expected).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn only_end_matched() {
+        let contigs = vec![make_contig()];
+        let mut overlaps = OverlapCollection::new();
+        overlaps.add(0, end_match(0, 1));
+
+        let result = calc_lq_coef(&contigs, &overlaps);
+        let expected = 50.00;
+
+        assert!((result - expected).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn multiple_contigs_no_overlaps() {
+        let contigs = vec![make_contig(), make_contig()];
+        let overlaps = OverlapCollection::new();
+
+        let result = calc_lq_coef(&contigs, &overlaps);
+        let expected = 0.00;
+
+        assert!((result - expected).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn multiple_contigs_quarter_overlap() {
+        let contigs = vec![
+            make_contig(),
+            make_contig(),
+            make_contig(),
+            make_contig(),
+        ];
+        let mut overlaps = OverlapCollection::new();
+        overlaps.add(0, end_match(0, 1));
+        overlaps.add(1, start_match(1, 0));
+
+        let result = calc_lq_coef(&contigs, &overlaps);
+        let expected = 25.00;
+
+        assert!((result - expected).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn both_contigs_fully_matched() {
+        let contigs = vec![make_contig(), make_contig()];
+        let mut overlaps = OverlapCollection::new();
+        overlaps.add(0, start_match(0, 1));
+        overlaps.add(0, end_match(0, 1));
+        overlaps.add(1, start_match(1, 0));
+        overlaps.add(1, end_match(1, 0));
+
+        let result = calc_lq_coef(&contigs, &overlaps);
+        let expected = 100.00;
+
+        assert!((result - expected).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn empty_collection() {
+        let contigs: Vec<ContigRecord> = vec![];
+        let overlaps = OverlapCollection::new();
+
+        let result = calc_lq_coef(&contigs, &overlaps);
+
+        assert!(result.is_nan());
+    }
+}
