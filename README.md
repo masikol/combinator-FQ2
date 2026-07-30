@@ -1,2 +1,116 @@
 # combinator-FQ2
-A tool for adjacent contigs detection and LQ-coefficient calculation. Rust implementation
+
+Combinator-FQ2 is a tool for detecting adjacent contigs and calculating the LQ-coefficient. The LQ-coefficient reflects the degree of linkage between contigs. The higher the LQ-coefficient, the more linked are the contigs.
+
+Combinator-FQ2 is a Rust re-implementation of a deprecated [combinator-FQ](https://github.com/masikol/combinator-FQ), which was written in Python.
+
+Latest version: `1.0.0`.
+
+## Description
+
+Combinator-FQ2 identifies adjacent contigs in order to facilitate further scaffolding.
+
+Format of input: multi-fasta file containing contigs.
+
+Combinator-FQ2 supports contigs assembled by SPAdes and A5.
+
+It calculates LQ-coefficient, defined as follows:
+
+![](formulas/LQ_definition.png)
+
+Length of overlap is further referred to as *k*. *k-start* (*k-end*) denotes contig's prefix (suffix) of length *k*.
+
+Ends of contigs are considered adjacent in following situations:
+
+![](formulas/adjacent_contigs.png)
+
+combinator-FQ2 calculates expected length of the genome as follows:
+
+![](formulas/exp_genome_len.png)
+
+If no coverage information is present in sequence headers, multiplicity is calculated based on discovered overlaps of the i-th contig as follows:
+
+![](formulas/ovl_multplty.png)
+
+## Installation
+
+For Linux amd64 systems, please go to [Releases](https://github.com/masikol/combinator-FQ2/releases) and download the latest executable.
+
+If it doesn’t suit you, you can **build it from source** with Cargo:
+```bash
+# Download an archive with sorce code of a release and extract it
+# Then go to the extracted directory
+cd combinator-fq2
+# Optionally: run autotests
+cargo test
+# Build the binary
+cargo build --release
+# Check the binary: should show the help message
+./target/release/combinator_fq2 -h
+```
+
+## Explanation of output files
+
+Combinator-FQ2 generates 3 output files:
+
+### 1) Table containing information about contigs adjacency:
+
+    <prefix>_combinator_adjacent_contigs.tsv
+
+Format of table is following:
+
+```
+#  Contig name  Length  Coverage  GC(%)  Multiplicity  Annotation  Start         End
+1  NODE_1...    304356  93.7155   34.12  1.2           [empty]     [S=E(NODE_22); ovl=127]  [E=rc_E(NODE_26); ovl=99]
+...
+```
+Explanation of "Start" and "End" columns:
+
+- `[S=E(NODE_22); ovl=127]` means that k-start (`S`) of contig `NODE_1...` is identical to k-end (`E`) of contig `NODE_22`, and overlap length is 127 (`ovl=127`).
+
+- `[E=rc_E(NODE_26); ovl=99]` means that k-end of contig `NODE_1...` is identical to reverse complement (`rc_`) k-end of contig `NODE_26`, and overlap length is 99 (`ovl=99`).
+
+### 2) File, in which all matchings (not only adjacency-associated) are listed:
+
+    <prefix>_combinator_full_matching_log.txt
+
+### 3) Brief summary:
+
+    <prefix>_combinator_summary.txt
+
+## Options
+
+```
+-h (--help): print help message;
+
+-v (--version): print version;
+
+-i (--mink): minimum k (in b.p.) to consider.
+  Value: integer > 0; Default if 21 b.p.
+
+-a (--maxk): maximum k (in b.p.) to consider.
+  Value: integer > 0; Default is 127 b.p.
+
+-k (--k-mer-len): exact k (in b.p.).
+  If specified, '-i' and '-a' options are ignored.
+  Value: integer > 0; Option is disabled by default;
+
+-o (--outdir): output directory;
+  Default value: 'combinator-result'
+```
+
+## Examples
+
+```bash
+  ./combinator-FQ2 contigs.fasta -k 127 -o my_outdir
+```
+
+```bash
+  ./combinator-FQ2 another_contigs.fa -i 25 -a 300 -o my_outdir
+```
+
+If input file is omitted in the command (like in the command below), combinator-FQ2 will process all fasta files in the working directory.
+
+```bash
+  ./combinator-FQ2 -i 25 -a 300 -o my_outdir
+```
