@@ -20,8 +20,7 @@ pub enum Terminus {
     RcEnd,
 }
 
-// TODO: use is consistently throughout overlaps, fasta_reader, 
-type ContigIdx = usize;
+pub type ContigIdx = usize;
 
 #[derive(Eq, Debug)]
 pub struct Overlap {
@@ -117,7 +116,6 @@ impl OverlapCollection {
         }
     }
 
-    // TODO: why &ContigIdx?
     /// Returns a reference to the list of overlaps for a given contig key.
     /// Returns an empty slice if the key doesn't exist.
     pub fn get(&self, key: &ContigIdx) -> &[Overlap] {

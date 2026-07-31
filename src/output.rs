@@ -10,7 +10,7 @@ use crate::args::Args;
 use crate::contig_record::ContigRecord;
 use crate::cov_summarizer::CovSummarizer;
 use crate::spades::get_spades_name_regex;
-use crate::overlaps::{Terminus, Overlap, OverlapCollection};
+use crate::overlaps::{Terminus, Overlap, OverlapCollection, ContigIdx};
 
 
 pub fn write_full_log(contig_collection: &Vec<ContigRecord>,
@@ -60,7 +60,7 @@ pub fn write_full_log(contig_collection: &Vec<ContigRecord>,
 
 fn get_overlap_strings_for_log(contig_collection: &Vec<ContigRecord>,
                                overlap_collection: &OverlapCollection,
-                               key: usize) -> Vec<String> {
+                               key: ContigIdx) -> Vec<String> {
     // The function extracts overlaps of `key` contigs associated with `term` terminus,
     //   converts this vector of `Overlap` instances to their string representations
     //   for full log.
@@ -241,18 +241,19 @@ fn write_adj_table_header(writer: &mut BufWriter<File>,
 
 fn get_overlap_str_for_table(overlap_collection: &OverlapCollection,
                              contig_collection:  &Vec<ContigRecord>,
-                             key: usize,
+                             contig_idx: ContigIdx,
                              term: TermForTable) -> String {
-    // Function extracts overlaps of `key` contigs associated with `term` terminus
+    // Function extracts overlaps of `contig_idx` contigs
+    //   associated with `term` terminus
     //   and converts this collection of `Overlap`
     // to string representation  for adjacency table.
 
     let overlaps = match term {
         TermForTable::Start => {
-            get_start_matches(overlap_collection.get(&key))
+            get_start_matches(overlap_collection.get(&contig_idx))
         },
         TermForTable::End => {
-            get_end_matches(overlap_collection.get(&key))
+            get_end_matches(overlap_collection.get(&contig_idx))
         },
     };
 
@@ -683,7 +684,7 @@ mod tests_calc_lq_coef {
         }
     }
 
-    fn start_match(contig_i: usize, contig_j: usize) -> Overlap {
+    fn start_match(contig_i: ContigIdx, contig_j: ContigIdx) -> Overlap {
         Overlap {
             contig_i: contig_i,
             terminus_i: Terminus::Start,
@@ -693,7 +694,7 @@ mod tests_calc_lq_coef {
         }
     }
 
-    fn end_match(contig_i: usize, contig_j: usize) -> Overlap {
+    fn end_match(contig_i: ContigIdx, contig_j: ContigIdx) -> Overlap {
         Overlap {
             contig_i: contig_i,
             terminus_i: Terminus::End,
