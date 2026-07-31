@@ -282,6 +282,7 @@ mod tests_detect_adjacent_contigs {
             maxk,
             input_fpath: file_path.clone(),
             outdir_path: PathBuf::from(""),
+            force: false,
         }
     }
 
@@ -452,6 +453,7 @@ mod tests_detect_adjacent_contigs {
             maxk: 5,
             input_fpath: PathBuf::from(""),
             outdir_path: PathBuf::from(""),
+            force: false,
         };
         let overlaps = detect_adjacent_contigs(&contigs, &args);
 
@@ -479,6 +481,7 @@ mod tests_detect_adjacent_contigs {
             maxk: 25,
             input_fpath: PathBuf::from(""),
             outdir_path: PathBuf::from(""),
+            force: false,
         };
 
         let overlaps = detect_adjacent_contigs(&contigs, &args);
@@ -523,6 +526,7 @@ mod tests_detect_adjacent_contigs {
             maxk: 100,
             input_fpath: PathBuf::from(""),
             outdir_path: PathBuf::from(""),
+            force: false,
         };
 
         let overlaps = detect_adjacent_contigs(&contigs, &args);
@@ -540,6 +544,7 @@ mod tests_detect_adjacent_contigs {
             maxk: 25,
             input_fpath: PathBuf::from(""),
             outdir_path: PathBuf::from(""),
+            force: false,
         };
 
         let overlaps = detect_adjacent_contigs(&contigs, &args);

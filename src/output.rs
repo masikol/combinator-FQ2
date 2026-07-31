@@ -13,6 +13,11 @@ use crate::spades::get_spades_name_regex;
 use crate::overlaps::{Terminus, Overlap, OverlapCollection, ContigIdx};
 
 
+pub const FULL_LOG_FILENAME:  &str = "combinator_full_matching_log.txt";
+pub const ADJ_TABLE_FILENAME: &str = "combinator_adjacent_contigs.tsv";
+pub const SUMMARY_FILENAME:   &str = "combinator_summary_FQ.txt";
+
+
 pub fn write_full_log(contig_collection: &Vec<ContigRecord>,
                       overlap_collection: &OverlapCollection,
                       args: &Args) -> Result<(), String>{
@@ -21,7 +26,7 @@ pub fn write_full_log(contig_collection: &Vec<ContigRecord>,
 
     // Make path to full log file
     let log_fpath: PathBuf = args.outdir_path.join(
-        "combinator_full_matching_log.txt"
+        FULL_LOG_FILENAME
     );
 
     println!("Writing full matching log to {:?}", log_fpath);
@@ -147,7 +152,7 @@ pub fn write_adjacency_table(contig_collection: &Vec<ContigRecord>,
 
     // Make path to adjacency table file
     let adj_table_fpath: PathBuf = args.outdir_path.join(
-        "combinator_adjacent_contigs.tsv"
+        ADJ_TABLE_FILENAME
     );
 
     println!("Writing adjacency table to {:?}", adj_table_fpath);
@@ -331,7 +336,7 @@ pub fn write_summary(contig_collection: &Vec<ContigRecord>,
                      args: &Args) -> Result<(), String> {
     // Make path to adjacency table file
     let summary_fpath: PathBuf = args.outdir_path.join(
-        "combinator_summary_FQ.txt"
+        SUMMARY_FILENAME
     );
 
     println!("Writing summary to {:?}", summary_fpath);

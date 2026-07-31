@@ -163,6 +163,7 @@ mod tests_calc_multiplty_by_overlaps {
             maxk,
             input_fpath: path.clone(),
             outdir_path: PathBuf::from(""),
+            force: false,
         };
 
         let reader = FastaReader::open(&path).unwrap();
@@ -202,6 +203,7 @@ mod tests_calc_multiplty_by_overlaps {
             maxk,
             input_fpath: path.clone(),
             outdir_path: PathBuf::from(""),
+            force: false,
         };
 
         let reader = FastaReader::open(&path).unwrap();
@@ -256,6 +258,7 @@ mod tests_assign_multiplty {
             maxk,
             input_fpath: path.clone(),
             outdir_path: PathBuf::from(""),
+            force: false,
         };
 
         let reader = FastaReader::open(&path).unwrap();
@@ -291,6 +294,7 @@ mod tests_assign_multiplty {
             maxk,
             input_fpath: path.clone(),
             outdir_path: PathBuf::from(""),
+            force: false,
         };
 
         let reader = FastaReader::open(&path).unwrap();

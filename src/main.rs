@@ -13,6 +13,7 @@ mod assign_multiplicity;
 
 
 use std::fs;
+use std::path::PathBuf;
 use std::process::ExitCode;
 
 use args::Args;
@@ -97,6 +98,32 @@ fn create_outdir(args: &Args) -> Result<(), ()> {
             return Err(());
         }
     }
+    if ! args.force {
+        err_if_output_exists(args)?;
+    }
+    Ok(())
+}
+
+fn err_if_output_exists(args: &Args) -> Result<(), ()> {
+    let all_out_file_names = [
+        out::FULL_LOG_FILENAME,
+        out::ADJ_TABLE_FILENAME,
+        out::SUMMARY_FILENAME,
+    ];
+
+    for filename in all_out_file_names {
+        let fpath: PathBuf = args.outdir_path.join(filename);
+        if fpath.is_file() {
+            eprintln!(
+                "Output file {:?} already exists.",
+                fpath.display()
+            );
+            eprintln!("Cowardly refusing to overwrite.");
+            eprintln!("Use -f / --force to overwrite.");
+            return Err(());
+        }
+    }
+
     Ok(())
 }
 

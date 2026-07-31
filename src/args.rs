@@ -59,6 +59,13 @@ struct RawArgs {
         value_parser 
     )]
     outdir_path: String,
+
+    /// Overwrite existing output files in the output directory
+    #[arg(
+        short = 'f',
+        long = "force"
+    )]
+    force: bool,
 }
 
 impl RawArgs {
@@ -101,11 +108,11 @@ impl RawArgs {
 
 
 pub struct Args {
-    // TODO: add -f/force option
     pub mink: usize,
     pub maxk: usize,
     pub input_fpath: PathBuf,
     pub outdir_path: PathBuf,
+    pub force: bool,
 }
 
 impl Args {
@@ -129,6 +136,7 @@ impl Args {
             maxk: maxk,
             input_fpath: PathBuf::from(&raw_args.input_fpath),
             outdir_path: PathBuf::from(&raw_args.outdir_path),
+            force: raw_args.force,
         })
     }
 }
@@ -141,6 +149,7 @@ impl fmt::Debug for Args {
             format!("  maxk: {}", self.maxk),
             format!("  Input file: {:?}", self.input_fpath),
             format!("  Output firectory: {:?}", self.outdir_path),
+            format!("  Force: {}", self.force),
             "-".repeat(20),
         ].join("\n");
         write!(f, "{}\n", fmt_str)
