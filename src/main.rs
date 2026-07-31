@@ -24,6 +24,7 @@ use overlaps::{OverlapCollection, detect_adjacent_contigs};
 
 
 fn main() -> ExitCode {
+    // TODO: simplify somehow
 
     let args = match Args::parse() {
         Ok(args) => args,
@@ -38,7 +39,7 @@ fn main() -> ExitCode {
         return ExitCode::FAILURE;
     }
 
-    let contig_records = read_contig_records(&args);
+    let contig_records: Result<Vec<ContigRecord>, String> = read_contig_records(&args);
     if let Err(err_str) = contig_records {
         eprintln!("{}", err_str);
         return ExitCode::FAILURE;

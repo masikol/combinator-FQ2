@@ -94,23 +94,13 @@ fn get_overlap_strings_for_log(contig_collection: &Vec<ContigRecord>,
             );
             match_strings.push(fmt_str);
         } else {
-            if ovl.terminus_i == Terminus::End && ovl.terminus_j == Terminus::Start {
-                // Contig is circular
-                let fmt_str = format!(
-                    "{}: contig is circular with overlap of {} bp",
-                    shorten_name(&contig_collection[key].name),
-                    ovl.ovl_len
-                );
-                match_strings.push(fmt_str);
-            } else if ovl.terminus_i == Terminus::Start && ovl.terminus_j == Terminus::RcEnd {
-                // Start of contig matches it's own reverse-complement end
-                let fmt_str = format!(
-                    "{}: start is identical to it's own rc-end with overlap of {} bp",
-                    shorten_name(&contig_collection[key].name),
-                    ovl.ovl_len
-                );
-                match_strings.push(fmt_str);
-            }
+            // Contig is circular
+            let fmt_str = format!(
+                "{}: contig is circular with overlap of {} bp",
+                shorten_name(&contig_collection[key].name),
+                ovl.ovl_len
+            );
+            match_strings.push(fmt_str);
         }
     }
 
@@ -285,7 +275,6 @@ fn get_overlap_str_for_table(overlap_collection: &OverlapCollection,
                 ovl.ovl_len
             ));
         } else {
-            // TODO: match it it’s own RC-end?
             ovl_strings.push(format!(
                 "[Circle; ovl={}]", ovl.ovl_len
             ));
@@ -519,12 +508,12 @@ fn calc_lq_coef(contig_collection: &Vec<ContigRecord>,
         // Count overlaps associated with start
         let num_start_overlaps: usize = overlap_collection.get(&i)
             .iter()
-            .filter(|ovl| is_start_match(ovl)) // TODO: or simply is_start_match?
+            .filter(|ovl| is_start_match(ovl))
             .count();
         // Count overlaps associated with end
         let num_end_overlaps: usize = overlap_collection.get(&i)
             .iter()
-            .filter(|ovl| is_end_match(ovl)) // TODO: or simply is_start_match?
+            .filter(|ovl| is_end_match(ovl))
             .count();
 
         let num_dead_ends: usize = 2
@@ -543,6 +532,8 @@ fn calc_lq_coef(contig_collection: &Vec<ContigRecord>,
     ) * 100.0
 }
 
+
+// >>> Tests >>>
 
 #[cfg(test)]
 mod tests_get_start_matches {

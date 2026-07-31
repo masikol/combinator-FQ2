@@ -71,6 +71,8 @@ impl IUPACValidator {
 }
 
 
+// >>> Tests >>>
+
 #[cfg(test)]
 mod tests_iupac_validator {
     use super::*;

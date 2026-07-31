@@ -79,6 +79,7 @@ fn calc_multiplty_by_overlaps(overlaps: &[Overlap]) -> f64 {
 }
 
 
+// >>> Tests >>>
 
 #[cfg(test)]
 mod tests_check_if_first_cov_is_valid {

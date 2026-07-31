@@ -118,6 +118,8 @@ fn parse_coverage(seq_name: &String) -> Option<f64> {
 }
 
 
+// >>> Tests >>>
+
 #[cfg(test)]
 mod tests_parse_coverage {
     use super::parse_coverage;

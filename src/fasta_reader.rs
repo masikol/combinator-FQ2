@@ -173,6 +173,8 @@ impl Iterator for FastaReader {
 }
 
 
+// >>> Tests >>>
+
 #[cfg(test)]
 mod tests_fasta_reader {
     use super::*;

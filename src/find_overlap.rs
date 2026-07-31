@@ -100,6 +100,8 @@ pub fn find_overlap_e2e(seq1: &String,
 }
 
 
+// >>> Tests >>>
+
 #[cfg(test)]
 mod tests_s2s {
     use super::*;

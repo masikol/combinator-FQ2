@@ -88,6 +88,8 @@ fn median(vec: &Vec<f64>) -> f64 {
 }
 
 
+// >>> Tests >>>
+
 #[cfg(test)]
 mod tests_min_str {
     use super::*;

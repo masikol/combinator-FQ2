@@ -12,7 +12,6 @@ use crate::find_overlap::{
 };
 
 
-// TODO: derive?
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum Terminus {
     Start,
@@ -21,10 +20,10 @@ pub enum Terminus {
     RcEnd,
 }
 
+// TODO: use is consistently throughout overlaps, fasta_reader, 
 type ContigIdx = usize;
 
-// TODO: derive?
-#[derive(Debug, Eq)]
+#[derive(Eq, Debug)]
 pub struct Overlap {
     pub contig_i: ContigIdx,
     pub terminus_i: Terminus,
@@ -106,8 +105,7 @@ impl Hash for Overlap {
 
 
 pub struct OverlapCollection {
-    // TODO: production: remove pub
-    pub collection: HashMap<ContigIdx, Vec<Overlap>>,
+    collection: HashMap<ContigIdx, Vec<Overlap>>,
 }
 
 
@@ -158,14 +156,6 @@ pub fn detect_adjacent_contigs(contigs: &Vec<ContigRecord>,
             overlaps.add(i, Overlap::new(i, Terminus::Start, i, Terminus::End,   ovl_len));
         }
 
-        // === Compare start of the current conitg to rc-end of the current contig ===
-        // Match variant 2
-        let ovl_len = find_overlap_s2s(&cont_i.start, &cont_i.rcend, mink, maxk);
-        if ovl_len != 0 {
-            overlaps.add(i, Overlap::new(i, Terminus::Start, i, Terminus::RcEnd, ovl_len));
-            overlaps.add(i, Overlap::new(i, Terminus::RcEnd, i, Terminus::Start, ovl_len));
-        }
-
         // |=== Compare i-th contig to contigs from i+1 to N ===|
         // We do it in order not to compare pairs of contigs more than one time
         for j in i+1..num_contigs {
@@ -173,7 +163,7 @@ pub fn detect_adjacent_contigs(contigs: &Vec<ContigRecord>,
             let cont_j = &contigs[j];
 
             // === Compare i-th start to j-th end ===
-            // Match variant 3
+            // Match variant 2
             let ovl_len = find_overlap_e2s(&cont_j.end, &cont_i.start, mink, maxk);
             if ovl_len != 0 {
                 overlaps.add(i, Overlap::new(i, Terminus::Start, j, Terminus::End,   ovl_len));
@@ -181,7 +171,7 @@ pub fn detect_adjacent_contigs(contigs: &Vec<ContigRecord>,
             }
 
             // === Compare i-th end to j-th start ===
-            // Match variant 4
+            // Match variant 3
             let ovl_len = find_overlap_e2s(&cont_i.end, &cont_j.start, mink, maxk);
             if ovl_len != 0 {
                 overlaps.add(i, Overlap::new(i, Terminus::End,   j, Terminus::Start, ovl_len));
@@ -189,7 +179,7 @@ pub fn detect_adjacent_contigs(contigs: &Vec<ContigRecord>,
             }
 
             // === Compare i-th start to reverse-complement j-th start ===
-            // Match variant 5
+            // Match variant 4
             let ovl_len = find_overlap_e2s(&cont_j.rcstart, &cont_i.start, mink, maxk);
             if ovl_len != 0 {
                 overlaps.add(i, Overlap::new(i, Terminus::Start, j, Terminus::RcStart, ovl_len));
@@ -197,7 +187,7 @@ pub fn detect_adjacent_contigs(contigs: &Vec<ContigRecord>,
             }
 
             // === Compare i-th end to reverse-complement j-th end ===
-            // Match variant 6
+            // Match variant 5
             let ovl_len = find_overlap_e2s(&cont_i.end, &cont_j.rcend, mink, maxk);
             if ovl_len != 0 {
                 overlaps.add(i, Overlap::new(i, Terminus::End, j, Terminus::RcEnd, ovl_len));
@@ -205,7 +195,7 @@ pub fn detect_adjacent_contigs(contigs: &Vec<ContigRecord>,
             }
 
             // === Compare i-th start to j-th start ===
-            // Match variant 7
+            // Match variant 6
             let ovl_len = find_overlap_s2s(&cont_i.start, &cont_j.start, mink, maxk);
             if ovl_len != 0 {
                 overlaps.add(i, Overlap::new(i, Terminus::Start, j, Terminus::Start, ovl_len));
@@ -213,7 +203,7 @@ pub fn detect_adjacent_contigs(contigs: &Vec<ContigRecord>,
             }
 
             // === Compare i-th end to j-th end ===
-            // Match variant 8
+            // Match variant 7
             let ovl_len = find_overlap_e2e(&cont_i.end, &cont_j.end, mink, maxk);
             if ovl_len != 0 {
                 overlaps.add(i, Overlap::new(i, Terminus::End, j, Terminus::End, ovl_len));
@@ -221,7 +211,7 @@ pub fn detect_adjacent_contigs(contigs: &Vec<ContigRecord>,
             }
 
             // === Compare i-th start to reverse-complement j-th end ===
-            // Match variant 9
+            // Match variant 8
             let ovl_len = find_overlap_s2s(&cont_i.start, &cont_j.rcend, mink, maxk);
             if ovl_len != 0 {
                 overlaps.add(i, Overlap::new(i, Terminus::Start, j, Terminus::RcEnd,   ovl_len));
@@ -229,7 +219,7 @@ pub fn detect_adjacent_contigs(contigs: &Vec<ContigRecord>,
             }
 
             // === Compare i-th end to reverse-complement j-th start ===
-            // Match variant 10
+            // Match variant 9
             let ovl_len = find_overlap_e2e(&cont_i.end, &cont_j.rcstart, mink, maxk);
             if ovl_len != 0 {
                 overlaps.add(i, Overlap::new(i, Terminus::End,   j, Terminus::RcStart, ovl_len));
@@ -248,6 +238,8 @@ pub fn detect_adjacent_contigs(contigs: &Vec<ContigRecord>,
 }
 
 
+// >>> Tests >>>
+
 #[cfg(test)]
 mod tests_detect_adjacent_contigs {
     use std::path::PathBuf;
@@ -258,28 +250,24 @@ mod tests_detect_adjacent_contigs {
     use crate::contig_record::ContigRecord;
     use super::*;
 
-    fn test_path_variants_3_4() -> PathBuf {
-        PathBuf::from("test_data/overlaps/test_contigs_variants_3-4.fasta")
-    }
-
     fn test_path_variant_1() -> PathBuf {
         PathBuf::from("test_data/overlaps/test_contigs_variant_1.fasta")
     }
 
-    fn test_path_variant_2() -> PathBuf {
-        PathBuf::from("test_data/overlaps/test_contigs_variant_2.fasta")
+    fn test_path_variants_2_3() -> PathBuf {
+        PathBuf::from("test_data/overlaps/test_contigs_variants_2-3.fasta")
     }
 
-    fn test_path_variants_5_6() -> PathBuf {
-        PathBuf::from("test_data/overlaps/test_contigs_variants_5-6.fasta")
+    fn test_path_variants_4_5() -> PathBuf {
+        PathBuf::from("test_data/overlaps/test_contigs_variants_4-5.fasta")
     }
 
-    fn test_path_variants_7_8() -> PathBuf {
-        PathBuf::from("test_data/overlaps/test_contigs_variants_7-8.fasta")
+    fn test_path_variants_6_7() -> PathBuf {
+        PathBuf::from("test_data/overlaps/test_contigs_variants_6-7.fasta")
     }
 
-    fn test_path_rc_variants_9_10() -> PathBuf {
-        PathBuf::from("test_data/overlaps/test_contigs_variants_9-10.fasta")
+    fn test_path_rc_variants_8_9() -> PathBuf {
+        PathBuf::from("test_data/overlaps/test_contigs_variants_8-9.fasta")
     }
 
     fn read_test_contigs(file_path: &PathBuf, maxk: usize) -> Vec<ContigRecord> {
@@ -327,27 +315,9 @@ mod tests_detect_adjacent_contigs {
     }
 
     #[test]
-    fn test_detect_adjacent_contigs_variant_2() {
-        // Tests match variant 2
-        let file_path = test_path_variant_2();
-        let contigs = read_test_contigs(&file_path, 25);
-        let args = make_args(&file_path, 16, 25);
-
-        let idx: ContigIdx = 0;
-
-        let overlaps = detect_adjacent_contigs(&contigs, &args);
-
-        let expected: Vec<Overlap> = vec![
-            Overlap::new(idx, Terminus::Start, idx, Terminus::RcEnd, 21),
-            Overlap::new(idx, Terminus::RcEnd, idx, Terminus::Start, 21),
-        ];
-        assert_overlap_set_eq(&overlaps.collection[&idx], &expected);
-    }
-
-    #[test]
-    fn test_detect_adjacent_contigs_variants_3_4() {
-        // Tests match variant 3 and variant 4
-        let file_path = test_path_variants_3_4();
+    fn test_detect_adjacent_contigs_variants_2_3() {
+        // Tests match variant 2 and variant 3
+        let file_path = test_path_variants_2_3();
         let contigs = read_test_contigs(&file_path, 25);
         let args = make_args(&file_path, 16, 25);
 
@@ -372,9 +342,9 @@ mod tests_detect_adjacent_contigs {
     }
 
     #[test]
-    fn test_detect_adjacent_contigs_variants_5_6() {
-        // Tests match variant 5 and variant 6
-        let file_path = test_path_variants_5_6();
+    fn test_detect_adjacent_contigs_variants_4_5() {
+        // Tests match variant 4 and variant 5
+        let file_path = test_path_variants_4_5();
         let contigs = read_test_contigs(&file_path, 25);
         let args = make_args(&file_path, 16, 25);
 
@@ -399,9 +369,9 @@ mod tests_detect_adjacent_contigs {
     }
 
     #[test]
-    fn test_detect_adjacent_contigs_variants_7_8() {
-        // Tests match variant 7 and variant 8
-        let file_path = test_path_variants_7_8();
+    fn test_detect_adjacent_contigs_variants_6_7() {
+        // Tests match variant 6 and variant 7
+        let file_path = test_path_variants_6_7();
         let contigs = read_test_contigs(&file_path, 25);
         let args = make_args(&file_path, 16, 25);
 
@@ -426,9 +396,9 @@ mod tests_detect_adjacent_contigs {
     }
 
     #[test]
-    fn test_detect_adjacent_contigs_variants_9_10() {
-        // Tests match variant 9 and variant 10
-        let file_path = test_path_rc_variants_9_10();
+    fn test_detect_adjacent_contigs_variants_8_9() {
+        // Tests match variant 8 and variant 9
+        let file_path = test_path_rc_variants_8_9();
         let contigs = read_test_contigs(&file_path, 25);
         let args = make_args(&file_path, 16, 25);
 
@@ -524,7 +494,7 @@ mod tests_detect_adjacent_contigs {
 
     #[test]
     fn test_mink_equals_maxk() {
-        let file_path = test_path_variants_3_4();
+        let file_path = test_path_variants_2_3();
         let contigs = read_test_contigs(&file_path, 25);
         let args = make_args(&file_path, 25, 25);
 

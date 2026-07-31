@@ -33,6 +33,8 @@ fn make_compl_base(base: char) -> Result<char, char> {
 }
 
 
+// >>> Tests >>>
+
 #[cfg(test)]
 mod test_revcompl {
 
