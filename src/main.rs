@@ -21,81 +21,44 @@ use output as out;
 use fasta_reader::FastaReader;
 use assign_multiplicity as amu;
 use contig_record::ContigRecord;
-use overlaps::{OverlapCollection, detect_adjacent_contigs};
+use overlaps::detect_adjacent_contigs;
 
 
 fn main() -> ExitCode {
-    // TODO: simplify somehow
-
-    let args = match Args::parse() {
-        Ok(args) => args,
+    match run() {
+        Ok(()) => ExitCode::SUCCESS,
         Err(err_msg) => {
             eprintln!("{}", err_msg);
-            return ExitCode::FAILURE;
+            ExitCode::FAILURE
         }
-    };
-    println!("{:?}", args);
-
-    if create_outdir(&args).is_err() {
-        return ExitCode::FAILURE;
     }
-
-    let contig_records: Result<Vec<ContigRecord>, String> = read_contig_records(&args);
-    if let Err(err_str) = contig_records {
-        eprintln!("{}", err_str);
-        return ExitCode::FAILURE;
-    }
-    let mut contig_records: Vec<ContigRecord> = contig_records.unwrap();
-
-    let overlaps: OverlapCollection = detect_adjacent_contigs(&contig_records, &args);
-
-    amu::assign_multiplty(&mut contig_records, &overlaps);
-
-    // Write full matching log
-    let out_result = out::write_full_log(
-        &contig_records,
-        &overlaps,
-        &args
-    );
-    if let Err(err_str) = out_result {
-        eprintln!("{}", err_str);
-        return ExitCode::FAILURE;
-    }
-
-    // Write adjacency table
-    let out_result = out::write_adjacency_table(
-        &contig_records,
-        &overlaps,
-        &args
-    );
-    if let Err(err_str) = out_result {
-        eprintln!("{}", err_str);
-        return ExitCode::FAILURE;
-    }
-
-    // Write summary
-    let out_result = out::write_summary(
-        &contig_records,
-        &overlaps,
-        &args
-    );
-    if let Err(err_str) = out_result {
-        eprintln!("{}", err_str);
-        return ExitCode::FAILURE;
-    }
-
-    ExitCode::SUCCESS
 }
 
-fn create_outdir(args: &Args) -> Result<(), ()> {
+fn run() -> Result<(), String> {
+    let args = Args::parse()?;
+    println!("{:?}", args);
+
+    create_outdir(&args)?;
+
+    let mut contig_records = read_contig_records(&args)?;
+    let overlaps = detect_adjacent_contigs(&contig_records, &args);
+    amu::assign_multiplty(&mut contig_records, &overlaps);
+
+    out::write_full_log(&contig_records, &overlaps, &args)?;
+    out::write_adjacency_table(&contig_records, &overlaps, &args)?;
+    out::write_summary(&contig_records, &overlaps, &args)?;
+
+    Ok(())
+}
+
+fn create_outdir(args: &Args) -> Result<(), String> {
     if ! args.outdir_path.is_dir() {
         if let Err(error) = fs::create_dir(&args.outdir_path) {
-            eprintln!(
-                "Error: cannot create directory `{}`",
-                args.outdir_path.display()
-            );
-            eprintln!("Reason: {}", error);
-            return Err(());
+            return Err(format!(
+                "Error: cannot create directory `{}`\nReason: {}",
+                args.outdir_path.display(),
+                error
+            ));
         }
     }
     if ! args.force {
@@ -104,7 +67,7 @@ fn create_outdir(args: &Args) -> Result<(), ()> {
     Ok(())
 }
 
-fn err_if_output_exists(args: &Args) -> Result<(), ()> {
+fn err_if_output_exists(args: &Args) -> Result<(), String> {
     let all_out_file_names = [
         out::FULL_LOG_FILENAME,
         out::ADJ_TABLE_FILENAME,
@@ -114,13 +77,12 @@ fn err_if_output_exists(args: &Args) -> Result<(), ()> {
     for filename in all_out_file_names {
         let fpath: PathBuf = args.outdir_path.join(filename);
         if fpath.is_file() {
-            eprintln!(
-                "Output file {:?} already exists.",
+            return Err(format!(
+                "Output file {:?} already exists.\n\
+                Cowardly refusing to overwrite.\n\
+                Use -f / --force to overwrite.",
                 fpath.display()
-            );
-            eprintln!("Cowardly refusing to overwrite.");
-            eprintln!("Use -f / --force to overwrite.");
-            return Err(());
+            ));
         }
     }
 

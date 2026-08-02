@@ -120,7 +120,6 @@ impl Args {
     pub fn parse() -> Result<Args, String> {
         let raw_args = RawArgs::parse();
         if let Err(err_msg) = raw_args.validate() {
-            eprintln!("{}", err_msg);
             return Err(err_msg);
         }
 
