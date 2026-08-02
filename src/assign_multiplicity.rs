@@ -3,7 +3,7 @@ use crate::overlaps::{Overlap, OverlapCollection};
 use crate::contig_record::{ContigRecord, MULTIPLTY_EPSILON};
 
 
-pub fn assign_multiplty(contig_collection: &mut Vec<ContigRecord>,
+pub fn assign_multiplicity(contig_collection: &mut Vec<ContigRecord>,
                         overlap_collection: &OverlapCollection) {
     // The function assigns multiplicity (copies of this contig in the genome) to contigs.
 
@@ -236,7 +236,7 @@ mod tests_calc_multiplty_by_overlaps {
 
 
 #[cfg(test)]
-mod tests_assign_multiplty {
+mod tests_assign_multiplicity {
     use std::path::PathBuf;
 
     use crate::args::Args;
@@ -244,7 +244,7 @@ mod tests_assign_multiplty {
     use crate::contig_record::ContigRecord;
     use crate::overlaps::detect_adjacent_contigs;
 
-    use super::assign_multiplty;
+    use super::assign_multiplicity;
 
     #[test]
     fn test_multiplty_1st_valid() {
@@ -268,7 +268,7 @@ mod tests_assign_multiplty {
             .collect();
 
         let overlaps = detect_adjacent_contigs(&contigs, &args);
-        assign_multiplty(&mut contigs, &overlaps);
+        assign_multiplicity(&mut contigs, &overlaps);
 
         let expected = 1.0;
         assert!((contigs[0].multiplty.unwrap() - expected).abs() < f64::EPSILON);
@@ -304,7 +304,7 @@ mod tests_assign_multiplty {
             .collect();
 
         let overlaps = detect_adjacent_contigs(&contigs, &args);
-        assign_multiplty(&mut contigs, &overlaps);
+        assign_multiplicity(&mut contigs, &overlaps);
 
         let expected = 1.0;
         assert!((contigs[0].multiplty.unwrap() - expected).abs() < f64::EPSILON);
