@@ -2,6 +2,12 @@
 use crate::iupac::nucl_bases::*;
 
 
+/// Returns the reverse complement of `seq`, using IUPAC complement rules.
+///
+/// # Errors
+///
+/// Returns `Err` containing the first character that has no IUPAC
+/// complement (i.e. is not a valid IUPAC nucleotide code).
 pub fn revcompl(seq: &str) -> Result<String, char> {
     seq.chars()
         .map(make_compl_base)
@@ -10,6 +16,8 @@ pub fn revcompl(seq: &str) -> Result<String, char> {
 }
 
 
+/// Returns the IUPAC complement of a single base, or the base itself in
+/// `Err` if it has no valid complement.
 fn make_compl_base(base: char) -> Result<char, char> {
     match base {
         ADENINE    => Ok(THYMINE),

@@ -11,12 +11,20 @@ use crate::iupac::IUPACValidator;
 type FastaLines = Lines<Box<dyn BufRead>>;
 
 
+/// One FASTA record: a header-derived name and the (uppercased) sequence.
 pub struct SeqRecord {
+    /// Contig name as it appears in the FASTA header, without the leading `>`.
     pub name: String,
+    /// Full sequence, uppercased and with whitespace removed.
     pub seq: String,
 }
 
 
+/// Iterator over the records of a FASTA file.
+///
+/// Transparently reads plain text and gzip-compressed files
+/// (detected by the `.gz` extension). Sequence lines are validated against the IUPAC
+/// alphabet and uppercased; a line may wrap over multiple FASTA lines.
 pub struct FastaReader {
     file_lines: FastaLines,
     next_header_line: String,
@@ -25,6 +33,14 @@ pub struct FastaReader {
 }
 
 impl FastaReader {
+    /// Opens a FASTA file for iteration.
+    ///
+    /// Files whose name ends in `.gz` are transparently decompressed.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if the file cannot be opened or its first line is
+    /// not a valid FASTA header.
     pub fn open(file_path: &PathBuf) -> Result<FastaReader, String> {
         let file = File::open(file_path).map_err(|e| {
             format!(
@@ -56,6 +72,13 @@ impl FastaReader {
         Ok(reader)
     }
 
+    /// Reads and validates the first line of the file, which must be a
+    /// non-empty FASTA header.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if the file is empty, if the first line is empty,
+    /// if it does not start with `>`, or if the header itself is empty.
     fn read_first_line(file_lines: &mut FastaLines) -> Result<String, String> {
         let next_line: Option<Result<String, IOError>> = file_lines.next();
         if next_line.is_none() {
@@ -100,6 +123,10 @@ impl FastaReader {
 impl Iterator for FastaReader {
     type Item = Result<SeqRecord, String>;
 
+    /// Returns the next record, or `None` at end of file.
+    ///
+    /// Yields `Some(Err(...))` for malformed input: unreadable lines,
+    /// empty lines, non-IUPAC characters, or empty sequences/headers.
     fn next(&mut self) -> Option<Self::Item> {
         if self.end_of_file_reached {
             return None;

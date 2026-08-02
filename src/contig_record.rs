@@ -10,24 +10,51 @@ use crate::iupac::nucl_bases::{
 use crate::fasta_reader::SeqRecord;
 use crate::spades::get_spades_name_regex;
 
+/// Coverage values below this threshold are treated as zero when
+/// calculating multiplicity from coverage.
 pub const MULTIPLTY_EPSILON: f64 = 1e-6;
 
 
+/// A single contig from the input FASTA file, enriched with features
+/// used by the pipeline.
+///
+/// Besides the parsed name and sequence-derived statistics (length, GC
+/// content, coverage), it stores the `maxk`-length termini of the
+/// sequence and their reverse complements, which are matched to detect
+/// adjacent contigs.
 #[derive(Debug)]
 pub struct ContigRecord {
+    /// Contig name as it appears in the FASTA header (without `>`).
     pub name: String,
+    /// Contig length in base pairs.
     pub length: usize,
+    /// GC content as a percentage.
     pub gc_content: f64,
+    /// Sequencing coverage parsed from a SPAdes-style header, if present.
     pub coverage: Option<f64>,
+    /// First `maxk` bases of the sequence.
     pub start: String,
+    /// Reverse complement of `start`.
     pub rcstart: String,
+    /// Last `maxk` bases of the sequence.
     pub end: String,
+    /// Reverse complement of `end`.
     pub rcend: String,
+    /// Assigned multiplicity (copies of the contig in the genome);
+    /// `None` until assigned.
     pub multiplty: Option<f64>,
 }
 
 impl ContigRecord {
 
+    /// Builds a `ContigRecord` from a FASTA `SeqRecord`.
+    ///
+    /// Assumes `seq_record.seq.len() >= maxk`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if a terminus cannot be reverse-complemented because
+    /// the sequence contains a non-IUPAC character.
     pub fn from(seq_record: SeqRecord,
                 maxk: usize) -> Result<ContigRecord, String> {
 
@@ -74,9 +101,16 @@ impl ContigRecord {
         })
     }
 
+    /// Sets `multiplty` to the ratio of this contig's coverage to the
+    /// first contig's coverage.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `first_contig_cov` is `None` or below
+    /// [`MULTIPLTY_EPSILON`], or if this contig has no coverage.
     pub fn set_multiplty_by_cov(&mut self, first_contig_cov: Option<f64>) {
         if first_contig_cov.is_none() {
-            panic!("BUG: coverage if the first contig is is None.");
+            panic!("BUG: coverage of the first contig is None.");
         }
         let first_contig_cov = first_contig_cov.unwrap();
         if first_contig_cov < MULTIPLTY_EPSILON {
@@ -88,6 +122,9 @@ impl ContigRecord {
 }
 
 
+/// Counts the number of GC bases (G, C, and IUPAC S) in `seq`.
+///
+/// Only uppercase characters are counted.
 fn calculate_gc_count(seq: &String) -> usize {
     let gc_base_set: HashSet<char> = HashSet::from_iter(
         vec![GUANINE, CYTOSINE, STRONG].into_iter()
@@ -100,12 +137,21 @@ fn calculate_gc_count(seq: &String) -> usize {
     gc_count
 }
 
+/// Computes GC content as a percentage of `seq_len`.
 fn calculate_gc_content(gc_count: usize, seq_len: usize) -> f64 {
     (gc_count as f64) / (seq_len as f64) * 100.0
 }
 
 
 
+/// Extracts coverage from a SPAdes-style FASTA header
+/// (e.g. `NODE_1_length_100_cov_50.0`).
+///
+/// Returns `None` if the header does not match the expected format.
+///
+/// # Panics
+///
+/// Panics if a coverage value is present but cannot be parsed as a float.
 fn parse_coverage(seq_name: &String) -> Option<f64> {
     let re = get_spades_name_regex();
     let capture = re.captures(seq_name)?.get(2)?;

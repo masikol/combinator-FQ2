@@ -13,17 +13,26 @@ use crate::spades::get_spades_name_regex;
 use crate::overlaps::{Terminus, Overlap, OverlapCollection, ContigIdx};
 
 
+/// File name of the full matching log.
 pub const FULL_LOG_FILENAME:  &str = "combinator_full_matching_log.txt";
+/// File name of the adjacency table.
 pub const ADJ_TABLE_FILENAME: &str = "combinator_adjacent_contigs.tsv";
+/// File name of the run summary.
 pub const SUMMARY_FILENAME:   &str = "combinator_summary_FQ.txt";
 
 
+/// Writes the full matching log to `FULL_LOG_FILENAME` in the output
+/// directory.
+///
+/// The log lists, for every contig, all of its overlaps as human-readable lines.
+///
+/// # Errors
+///
+/// Returns `Err` if the file cannot be created or a line cannot be
+/// written.
 pub fn write_full_log(contig_collection: &Vec<ContigRecord>,
                       overlap_collection: &OverlapCollection,
                       args: &Args) -> Result<(), String>{
-    // The function writes full matching log (not only adjacency-associated matches)
-    //   to "full-log" file.
-
     // Make path to full log file
     let log_fpath: PathBuf = args.outdir_path.join(
         FULL_LOG_FILENAME
@@ -63,13 +72,12 @@ pub fn write_full_log(contig_collection: &Vec<ContigRecord>,
 }
 
 
+/// Builds the log lines describing all overlaps of the contig `key`.
+///
+/// Self-matching overlaps are reported as the contig being circular.
 fn get_overlap_strings_for_log(contig_collection: &Vec<ContigRecord>,
                                overlap_collection: &OverlapCollection,
                                key: ContigIdx) -> Vec<String> {
-    // The function extracts overlaps of `key` contigs associated with `term` terminus,
-    //   converts this vector of `Overlap` instances to their string representations
-    //   for full log.
-
     // Extract overlaps for current contig
     let overlaps: &[Overlap] = overlap_collection.get(&key);
     let mut match_strings = Vec::new(); // a list for formatted strings
@@ -113,9 +121,8 @@ fn get_overlap_strings_for_log(contig_collection: &Vec<ContigRecord>,
 }
 
 
+/// Maps each `Terminus` to its word representation used in the full log.
 fn make_key2word_map() -> HashMap<Terminus, String> {
-    // This dictionary maps `Terminus` to it's "word" representation
-    //   for full log.
     let mut key2word_map: HashMap<Terminus, String> = HashMap::new();
 
     key2word_map.insert(Terminus::Start,   String::from("start"));
@@ -126,6 +133,10 @@ fn make_key2word_map() -> HashMap<Terminus, String> {
     key2word_map
 }
 
+/// Shortens a SPAdes-style contig name to its base identifier (e.g.
+/// `NODE_1` from `NODE_1_length_100_cov_50.0`).
+///
+/// Returns the name unchanged if it does not match the expected format.
 fn shorten_name(name: &String) -> String {
     let re = get_spades_name_regex();
     let capture: Option<regex::Captures> = re.captures(name);
@@ -144,10 +155,19 @@ fn shorten_name(name: &String) -> String {
 }
 
 
+/// Writes the adjacency table to `ADJ_TABLE_FILENAME` in the output
+/// directory.
+///
+/// The table has one row per contig, with columns for contig stats and
+/// its start- and end-associated matches.
+///
+/// # Errors
+///
+/// Returns `Err` if the file cannot be created or a row cannot be
+/// written.
 pub fn write_adjacency_table(contig_collection: &Vec<ContigRecord>,
                              overlap_collection: &OverlapCollection,
                              args: &Args) -> Result<(), String> {
-    // The function writes adjacency table to output TSV file.
     let sep = "\t";
 
     // Make path to adjacency table file
@@ -212,11 +232,19 @@ pub fn write_adjacency_table(contig_collection: &Vec<ContigRecord>,
     Ok(())
 }
 
+/// A contig terminus of interest for the adjacency table.
 enum TermForTable {
+    /// The start terminus.
     Start,
+    /// The end terminus.
     End,
 }
 
+/// Writes the header row of the adjacency table.
+///
+/// # Errors
+///
+/// Returns `Err` if the header cannot be written.
 fn write_adj_table_header(writer: &mut BufWriter<File>,
                           sep: &str,
                           out_fpath: &PathBuf) -> Result<(), String>{
@@ -244,15 +272,14 @@ fn write_adj_table_header(writer: &mut BufWriter<File>,
     Ok(())
 }
 
+/// Formats the overlaps of `contig_idx` associated with the given
+/// `term` for the adjacency table, joined by spaces.
+///
+/// Returns `"-"` when there are no such overlaps.
 fn get_overlap_str_for_table(overlap_collection: &OverlapCollection,
                              contig_collection:  &Vec<ContigRecord>,
                              contig_idx: ContigIdx,
                              term: TermForTable) -> String {
-    // Function extracts overlaps of `contig_idx` contigs
-    //   associated with `term` terminus
-    //   and converts this collection of `Overlap`
-    // to string representation  for adjacency table.
-
     let overlaps = match term {
         TermForTable::Start => {
             get_start_matches(overlap_collection.get(&contig_idx))
@@ -290,22 +317,23 @@ fn get_overlap_str_for_table(overlap_collection: &OverlapCollection,
     ovl_strings.join(" ")
 }
 
+/// Selects the start-associated overlaps from a collection of overlaps.
 fn get_start_matches(overlaps: &[Overlap]) -> Vec<&Overlap> {
-    // The function selects "start-associated" overlaps from a collection of overlaps.
     return overlaps.iter().filter(
         |ovl| is_start_match(ovl)
     ).collect();
 }
 
+/// Selects the end-associated overlaps from a collection of overlaps.
 fn get_end_matches(overlaps: &[Overlap]) -> Vec<&Overlap> {
-    // The function selects "end-associated" overlaps from a collection of overlaps.
     return overlaps.iter().filter(
         |ovl| is_end_match(ovl)
     ).collect();
 }
 
+/// Returns `true` if overlap `ovl` is associated with the start of the
+/// i-th contig.
 fn is_start_match(ovl: &Overlap) -> bool {
-    // The function returns True if overlap `ovl` is associated with start.
     (
         ovl.terminus_i == Terminus::Start && ovl.terminus_j == Terminus::End
     ) || (
@@ -313,8 +341,9 @@ fn is_start_match(ovl: &Overlap) -> bool {
     )
 }
 
+/// Returns `true` if overlap `ovl` is associated with the end of the
+/// i-th contig.
 fn is_end_match(ovl: &Overlap) -> bool {
-    // The function returns True if overlap `ovl` is associated with end.
     (
         ovl.terminus_i == Terminus::End && ovl.terminus_j == Terminus::Start
     ) || (
@@ -322,6 +351,8 @@ fn is_end_match(ovl: &Overlap) -> bool {
     )
 }
 
+/// Returns the one-letter table code for a terminus (`S`, `E`, `rc_S`,
+/// `rc_E`).
 fn get_match_letter(terminus: &Terminus) -> String {
     match terminus {
         Terminus::Start   => String::from("S"),
@@ -331,6 +362,16 @@ fn get_match_letter(terminus: &Terminus) -> String {
     }
 }
 
+/// Writes the run summary to `SUMMARY_FILENAME` in the output directory
+/// and echoes it to stdout.
+///
+/// The summary reports contig statistics, expected genome size,
+/// coverage statistics, and the LQ coefficient.
+///
+/// # Errors
+///
+/// Returns `Err` if the file cannot be created or a line cannot be
+/// written.
 pub fn write_summary(contig_collection: &Vec<ContigRecord>,
                      overlap_collection: &OverlapCollection,
                      args: &Args) -> Result<(), String> {
@@ -371,6 +412,7 @@ pub fn write_summary(contig_collection: &Vec<ContigRecord>,
     Ok(())
 }
 
+/// Builds the lines of the run summary.
 fn make_summary_lines(contig_collection: &Vec<ContigRecord>,
                       overlap_collection: &OverlapCollection,
                       args: &Args) -> Vec<String> {
@@ -442,12 +484,15 @@ fn make_summary_lines(contig_collection: &Vec<ContigRecord>,
     out_lines
 }
 
+/// Sum of the lengths of all contigs.
 fn calc_sum_contig_lengths(contig_collection: &Vec<ContigRecord>) -> usize {
     contig_collection.iter().map(
         |contig| contig.length
     ).sum()
 }
 
+/// Estimates the genome size: the multiplicity-weighted sum of contig
+/// lengths minus the total length of the counted overlaps.
 fn calc_exp_genome_size(contig_collection: &Vec<ContigRecord>,
                         overlap_collection: &OverlapCollection) -> usize {
     let sum_overlap_len = calc_sum_overlap_len(
@@ -460,6 +505,8 @@ fn calc_exp_genome_size(contig_collection: &Vec<ContigRecord>,
     ).sum::<usize>() - sum_overlap_len
 }
 
+/// Sums the lengths of start- and end-associated overlaps per contig,
+/// counting at most the contig's multiplicity of overlaps on each side.
 fn calc_sum_overlap_len(contig_collection: &Vec<ContigRecord>,
                         overlap_collection: &OverlapCollection) -> usize {
     let mut total_overlap_len: usize = 0;
@@ -499,9 +546,11 @@ fn calc_sum_overlap_len(contig_collection: &Vec<ContigRecord>,
     total_overlap_len
 }
 
+/// Computes the LQ coefficient: the percentage of contig termini that
+/// are connected by an overlap, counting a terminus as matched if it has
+/// at least one associated overlap.
 fn calc_lq_coef(contig_collection: &Vec<ContigRecord>,
                 overlap_collection: &OverlapCollection) -> f64 {
-    // The function calculates LQ-coefficient for given contigs.
 
     // Number of termini of a contig
     let num_contig_termini: usize = 2;

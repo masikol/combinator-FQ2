@@ -1,13 +1,22 @@
 
+//! Overlap-search primitives used to detect adjacent contigs.
+//!
+//! Each function compares the termini of two sequences and returns the
+//! length of the longest identity within the range `[mink, maxk]`, or
+//! `0` when no overlap of at least `mink` exists.
+
+/// Finds the length of the longest identical prefix (start-to-start overlap)
+/// shared by `seq1` and `seq2`.
+///
+/// Only overlaps of length in `[mink, maxk]` are considered; the search
+/// window is further clamped by the lengths of both sequences.
+///
+/// Returns `0` if the overlap is shorter than `mink`, otherwise the
+/// overlap length (which is `<= maxk`).
 pub fn find_overlap_s2s(seq1: &String,
                         seq2: &String,
                         mink: usize,
                         maxk: usize) -> usize {
-    // The function searches for identity between starts of seq1 and seq2.
-    // Function regards overlap of length [mink, maxk].
-    //
-    // Returns 0 if overlap is less than 'mink' and
-    //   length of the overlap (which is <= maxk) otherwise.
 
     let seq1_len: usize = seq1.len();
     let seq2_len: usize = seq2.len();
@@ -34,15 +43,18 @@ pub fn find_overlap_s2s(seq1: &String,
 }
 
 
+/// Finds the length of the longest identity between the end of `seq1`
+/// and the start of `seq2` (end-to-start overlap).
+///
+/// Only overlaps of length in `[mink, maxk]` are considered; the search
+/// window is further clamped by the lengths of both sequences.
+///
+/// Returns `0` if the overlap is shorter than `mink`, otherwise the
+/// overlap length (which is `<= maxk`).
 pub fn find_overlap_e2s(seq1: &String,
                         seq2: &String,
                         mink: usize,
                         maxk: usize) -> usize {
-    // The function searches for identity between end of seq1 and start of seq2.
-    // Function regards overlap of length [mink, maxk].
-    //
-    // Returns 0 if overlap is less than 'mink' and
-    //   length of the overlap (which is <= maxk) otherwise.
 
     let seq1_len: usize = seq1.len();
     let seq2_len: usize = seq2.len();
@@ -65,15 +77,18 @@ pub fn find_overlap_e2s(seq1: &String,
 }
 
 
+/// Finds the length of the longest identical suffix (end-to-end overlap)
+/// shared by `seq1` and `seq2`.
+///
+/// Only overlaps of length in `[mink, maxk]` are considered; the search
+/// window is further clamped by the lengths of both sequences.
+///
+/// Returns `0` if the overlap is shorter than `mink`, otherwise the
+/// overlap length (which is `<= maxk`).
 pub fn find_overlap_e2e(seq1: &String,
                         seq2: &String,
                         mink: usize,
                         maxk: usize) -> usize {
-    // The function searches for identity between ends of seq1 and seq2.
-    // Function regards overlap of length [mink, maxk].
-    //
-    // Returns 0 if overlap is less than 'mink' and
-    //   length of the overlap (which is <= maxk) otherwise.
 
     let seq1_len: usize = seq1.len();
     let seq2_len: usize = seq2.len();

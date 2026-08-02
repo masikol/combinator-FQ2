@@ -12,27 +12,40 @@ use crate::find_overlap::{
 };
 
 
+/// A terminus of a contig: the start or end of the sequence,
+// or the start or end of its reverse complement.
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum Terminus {
+    /// The start of the sequence.
     Start,
+    /// The end of the sequence.
     End,
+    /// The start of the reverse complement.
     RcStart,
+    /// The end of the reverse complement.
     RcEnd,
 }
 
+/// Index of a contig within the contig collection.
 pub type ContigIdx = usize;
 
+/// A detected overlap between two termini of (possibly the same) contigs.
 #[derive(Eq, Debug)]
 pub struct Overlap {
+    /// Index of the first contig.
     pub contig_i: ContigIdx,
+    /// Terminus of the first contig.
     pub terminus_i: Terminus,
+    /// Index of the second contig.
     pub contig_j: ContigIdx,
+    /// Terminus of the second contig.
     pub terminus_j: Terminus,
+    /// Length of the overlapping region.
     pub ovl_len: usize,
 }
 
 impl Overlap {
-    /// A constructor for concise Overlap instatiation
+    /// Constructs an `Overlap` concisely.
     fn new(contig_i: ContigIdx,
            terminus_i: Terminus,
            contig_j: ContigIdx,
@@ -47,6 +60,8 @@ impl Overlap {
         }
     }
 
+    /// Returns whether this overlap is associated with the start of the
+    /// first contig (its start matches an end or an rc-start).
     pub fn is_start_match(&self) -> bool {
         (
             self.terminus_i == Terminus::Start
@@ -57,6 +72,8 @@ impl Overlap {
         )
     }
 
+    /// Returns whether this overlap is associated with the end of the
+    /// first contig (its end matches a start or an rc-end).
     pub fn is_end_match(&self) -> bool {
         (
             self.terminus_i == Terminus::End
@@ -103,13 +120,16 @@ impl Hash for Overlap {
 }
 
 
+/// A collection of overlaps indexed by contig index.
+///
+/// Lookups for contigs without recorded overlaps return an empty slice.
 pub struct OverlapCollection {
     collection: HashMap<ContigIdx, Vec<Overlap>>,
 }
 
 
 impl OverlapCollection {
-    /// Creates a new empty OverlapCollection
+    /// Creates a new empty `OverlapCollection`.
     pub fn new() -> Self {
         OverlapCollection {
             collection: HashMap::new(),
@@ -129,6 +149,12 @@ impl OverlapCollection {
     }
 }
 
+/// Detects overlaps between the termini of all contigs within the
+/// `[mink, maxk]` window and returns them in an [`OverlapCollection`].
+///
+/// For each unordered pair of contigs (and self-pairs, used to detect
+/// circular contigs), every terminus combination is compared, including
+/// the reverse-complemented termini. Progress is reported on stdout.
 pub fn detect_adjacent_contigs(contigs: &Vec<ContigRecord>,
                                args: &Args) -> OverlapCollection {
     let mink = args.mink;

@@ -5,6 +5,77 @@ use std::path::PathBuf;
 use clap::Parser;
 
 
+/// Validated program arguments used throughout the pipeline.
+///
+/// Holds the effective k-mer bounds: if the single `-k` option was given
+/// on the command line, both `mink` and `maxk` are set to that value.
+pub struct Args {
+    /// Minimum k-mer length to test.
+    pub mink: usize,
+    /// Maximum k-mer length to test.
+    pub maxk: usize,
+    /// Path to the input FASTA file.
+    pub input_fpath: PathBuf,
+    /// Path to the output directory.
+    pub outdir_path: PathBuf,
+    /// Whether existing output files may be overwritten.
+    pub force: bool,
+}
+
+impl Args {
+
+    /// Parses and validates the command-line arguments.
+    ///
+    /// If the single `-k` option is given, it overrides `-i`/`-a` by
+    /// setting both `mink` and `maxk` to that value.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if the arguments are invalid: a zero k value,
+    /// `mink > maxk`, a nonexistent input file, or a clap parse failure.
+    pub fn parse() -> Result<Args, String> {
+        let raw_args = RawArgs::parse();
+        if let Err(err_msg) = raw_args.validate() {
+            return Err(err_msg);
+        }
+
+        let mut mink = raw_args.mink;
+        let mut maxk = raw_args.maxk;
+        if let Some(k) = raw_args.k {
+            mink = k;
+            maxk = k;
+        }
+
+        Ok(Args {
+            mink: mink,
+            maxk: maxk,
+            input_fpath: PathBuf::from(&raw_args.input_fpath),
+            outdir_path: PathBuf::from(&raw_args.outdir_path),
+            force: raw_args.force,
+        })
+    }
+}
+
+impl fmt::Debug for Args {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let fmt_str: String = vec![
+            String::from("=== Run parameters ==="),
+            format!("  mink: {}", self.mink),
+            format!("  maxk: {}", self.maxk),
+            format!("  Input file: {:?}", self.input_fpath),
+            format!("  Output directory: {:?}", self.outdir_path),
+            format!("  Force: {}", self.force),
+            "-".repeat(20),
+        ].join("\n");
+        write!(f, "{}\n", fmt_str)
+    }
+}
+
+
+/// CLI arguments as parsed directly by clap (before validation).
+///
+/// The field doc comments below are rendered by clap as the `--help`
+/// text for each option.
 #[derive(Parser)]
 #[command(
     name = "combinator_fq2",
@@ -26,7 +97,7 @@ struct RawArgs {
         short = 'i',
         long,
         default_value_t = 21,
-        value_parser 
+        value_parser
     )]
     mink: usize,
 
@@ -36,17 +107,17 @@ struct RawArgs {
         short = 'a',
         long,
         default_value_t = 127,
-        value_parser 
+        value_parser
     )]
-    maxk:usize,
+    maxk: usize,
 
     /// Single k to test.
-    /// If speified, `-i` and `-a` options are ignored.
+    /// If specified, `-i` and `-a` options are ignored.
     /// Integer > 0. Disabled by default
     #[arg(
         short = 'k',
         long = "k-mer",
-        value_parser 
+        value_parser
     )]
     k: Option<usize>,
 
@@ -56,7 +127,7 @@ struct RawArgs {
         short = 'o',
         long = "outdir",
         default_value_t = String::from("combinator-result"),
-        value_parser 
+        value_parser
     )]
     outdir_path: String,
 
@@ -103,54 +174,5 @@ impl RawArgs {
         }
 
         Ok(())
-    }
-}
-
-
-pub struct Args {
-    pub mink: usize,
-    pub maxk: usize,
-    pub input_fpath: PathBuf,
-    pub outdir_path: PathBuf,
-    pub force: bool,
-}
-
-impl Args {
-
-    pub fn parse() -> Result<Args, String> {
-        let raw_args = RawArgs::parse();
-        if let Err(err_msg) = raw_args.validate() {
-            return Err(err_msg);
-        }
-
-        let mut mink = raw_args.mink;
-        let mut maxk = raw_args.maxk;
-        if let Some(k) = raw_args.k {
-            mink = k;
-            maxk = k;
-        }
-
-        Ok(Args {
-            mink: mink,
-            maxk: maxk,
-            input_fpath: PathBuf::from(&raw_args.input_fpath),
-            outdir_path: PathBuf::from(&raw_args.outdir_path),
-            force: raw_args.force,
-        })
-    }
-}
-
-impl fmt::Debug for Args {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let fmt_str: String = vec![
-            String::from("=== Run parameters ==="),
-            format!("  mink: {}", self.mink),
-            format!("  maxk: {}", self.maxk),
-            format!("  Input file: {:?}", self.input_fpath),
-            format!("  Output firectory: {:?}", self.outdir_path),
-            format!("  Force: {}", self.force),
-            "-".repeat(20),
-        ].join("\n");
-        write!(f, "{}\n", fmt_str)
     }
 }

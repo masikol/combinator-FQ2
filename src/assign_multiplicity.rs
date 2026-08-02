@@ -3,11 +3,19 @@ use crate::overlaps::{Overlap, OverlapCollection};
 use crate::contig_record::{ContigRecord, MULTIPLTY_EPSILON};
 
 
+/// Assigns a multiplicity (number of copies of the contig in the genome)
+/// to every contig, updating `contig_collection` in place.
+///
+/// Multiplicity is computed from coverage when the coverage of the first
+/// contig is valid (present and at least MULTIPLTY_EPSILON); otherwise
+/// it is computed from the number of overlaps associated with the contig.
+///
+/// # Panics
+///
+/// Panics if `contig_collection` is empty.
 pub fn assign_multiplicity(contig_collection: &mut Vec<ContigRecord>,
                         overlap_collection: &OverlapCollection) {
-    // The function assigns multiplicity (copies of this contig in the genome) to contigs.
-
-    // Coverage of 1-st contig can be zero.
+    // Coverage of 1-st contig might be zero.
     // In this case we cannot calculate multiplicity of contigs based on coverage.
     // Set `first_cov_is_valid` to false if the first contig has no coverage.
     let first_cov_is_valid: bool = check_if_first_cov_is_valid(&contig_collection);
@@ -32,6 +40,15 @@ pub fn assign_multiplicity(contig_collection: &mut Vec<ContigRecord>,
 }
 
 
+/// Returns whether the coverage of the first contig can be used as a
+/// reference for multiplicity calculations.
+///
+/// Returns `false` and prints a warning when the first contig has no
+/// coverage or its coverage is below MULTIPLTY_EPSILON.
+///
+/// # Panics
+///
+/// Panics if `contig_collection` is empty.
 fn check_if_first_cov_is_valid(contig_collection: &Vec<ContigRecord>) -> bool {
     let first_cov: Option<f64> = contig_collection[0].coverage;
     if first_cov.is_none() {
@@ -56,6 +73,10 @@ fn check_if_first_cov_is_valid(contig_collection: &Vec<ContigRecord>) -> bool {
     true
 }
 
+/// Estimates the multiplicity of a contig from its associated overlaps.
+///
+/// The multiplicity is the minimum of the number of overlaps at the
+/// contig's start and end, floored at 1.
 fn calc_multiplty_by_overlaps(overlaps: &[Overlap]) -> f64 {
     // The function for calculating multiplicity of a given contig
     //   based on number of overlaps of this contig.

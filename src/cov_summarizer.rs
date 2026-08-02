@@ -2,11 +2,18 @@
 use crate::contig_record::ContigRecord;
 
 
+/// Computes coverage statistics (min, max, mean, median) across the
+/// contigs of an assembly.
+///
+/// Contigs without coverage are ignored. When no contig has coverage,
+/// every statistic is rendered as `"NA"`.
 pub struct CovSummarizer {
     cov_vector: Vec<f64>,
 }
 
 impl CovSummarizer {
+    /// Collects the coverages of all `contig_collection` entries,
+    /// skipping contigs without coverage.
     pub fn from(contig_collection: &Vec<ContigRecord>) -> CovSummarizer {
         CovSummarizer {
             cov_vector: contig_collection.iter()
@@ -16,6 +23,8 @@ impl CovSummarizer {
         }
     }
 
+    /// Minimum coverage, formatted to two decimals,
+    /// or `"NA"` if there are no coverages.
     pub fn min_str(&self) -> String {
         if self.cov_vector.is_empty() {
             return String::from("NA");
@@ -28,6 +37,8 @@ impl CovSummarizer {
         )
     }
 
+    /// Maximum coverage, formatted to two decimals,
+    /// or `"NA"` if there are no coverages.
     pub fn max_str(&self) -> String {
         if self.cov_vector.is_empty() {
             return String::from("NA");
@@ -40,6 +51,11 @@ impl CovSummarizer {
         )
     }
 
+    /// Mean coverage, formatted to two decimals,
+    /// or `"NA"` if there are no coverages.
+    ///
+    /// Computed by dividing each value first, then summing, to avoid
+    /// float overflow.
     pub fn mean_str(&self) -> String {
         if self.cov_vector.is_empty() {
             return String::from("NA");
@@ -54,6 +70,8 @@ impl CovSummarizer {
         )
     }
 
+    /// Median coverage, formatted to two decimals,
+    /// or `"NA"` if there are no coverages.
     pub fn median_str(&self) -> String {
         if self.cov_vector.is_empty() {
             return String::from("NA");
@@ -67,6 +85,8 @@ impl CovSummarizer {
 }
 
 
+/// Median of a non-empty slice of values: the middle value for an odd
+/// count, or the mean of the two middle values for an even count.
 fn median(vec: &Vec<f64>) -> f64 {
     let mut vec_sorted = vec.clone();
     vec_sorted.sort_by(
