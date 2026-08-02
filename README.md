@@ -99,10 +99,52 @@ Explanation of "Start" and "End" columns:
 
 ## Examples
 
+### Use as a binary
+
 ```bash
-  ./combinator-FQ2 contigs.fasta -k 127 -o my_outdir
+  ./combinator-FQ2 contigs.fasta -k 127 -o outdir/
 ```
 
 ```bash
-  ./combinator-FQ2 another_contigs.fa.gz -i 25 -a 300 -o my_outdir
+  ./combinator-FQ2 another_contigs.fa.gz -i 25 -a 300 -o outdir/
+```
+
+### Use as Rust library
+```rust
+use std::path::PathBuf;
+
+use combinator_fq2::{Args, ContigRecord, detect_adjacent_contigs};
+
+let make_contig = |name: &str, start: &str, end: &str| ContigRecord {
+    name: name.to_string(),
+    length: start.len(),
+    gc_content: 50.0,
+    coverage: None,
+    start: start.to_string(),
+    rcstart: String::new(),
+    end: end.to_string(),
+    rcend: String::new(),
+    multiplty: None,
+};
+
+// contig_1's end is identical to contig_2's start (14 bp).
+let contigs = vec![
+    make_contig("contig_1", "ATGCATGCATGCAT", "GATCGATCGATCGA"),
+    make_contig("contig_2", "GATCGATCGATCGA", "TTTTTTTTTTTTTT"),
+];
+
+let args = Args {
+    mink: 5,
+    maxk: 14,
+    input_fpath: PathBuf::from(""),
+    outdir_path: PathBuf::from(""),
+    force: false,
+};
+
+let overlaps = detect_adjacent_contigs(&contigs, &args);
+
+let ovl = &overlaps.get(&0)[0];
+assert_eq!(ovl.contig_i, 0);
+assert_eq!(ovl.contig_j, 1);
+assert_eq!(ovl.ovl_len, 14);
 ```
