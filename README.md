@@ -32,11 +32,34 @@ If no coverage information is present in sequence headers, multiplicity is calcu
 
 ## Installation
 
+### Download a binary from GitHub
+
 For Linux amd64 systems, please go to [Releases](https://github.com/masikol/combinator-FQ2/releases) and download the latest executable.
 
-If it doesn’t suit you, you can **build it from source** with [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html):
+### Install using Cargo
+
+First, install [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html).
+
+Install the latest version of combinator-FQ2
+
 ```bash
-# Download an archive with sorce code of a release and extract it
+cargo install combinator_fq2
+```
+
+Install the specific version (say, 1.0.0)
+```bash
+cargo install combinator_fq2@1.0.0
+```
+
+### Build from source
+
+First, install [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html).
+
+Then, download an archive with sorce code of a release and extract it. Let’s assume you’vs extracted the archive to the `combinator-fq2/` directory.
+
+Then, run the following:
+
+```bash
 # Then go to the extracted directory
 cd combinator-fq2
 # Optionally: run autotests
@@ -44,7 +67,7 @@ cargo test
 # Build the binary
 cargo build --release
 # Check the binary: should show the help message
-./target/release/combinator_fq2 -h
+./target/release/combinator_fq2 --help
 ```
 
 ## Explanation of output files
