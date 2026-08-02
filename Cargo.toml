@@ -3,6 +3,13 @@ name = "combinator_fq2"
 version = "1.0.0"
 edition = "2024"
 license = "GPL-3.0-or-later"
+description = "A tool for adjacent contigs detection and LQ-coefficient calculation"
+homepage = "https://github.com/masikol/combinator-FQ2"
+repository = "https://github.com/masikol/combinator-FQ2"
+readme = "README.md"
+
+keywords = ["bioinformatics", "genome", "assembly", "contigs"]
+categories = ["science::bioinformatics::genomics"]
 
 [dependencies]
 clap = { version = "4.6.1", features = ["derive"] }
