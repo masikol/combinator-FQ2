@@ -118,6 +118,9 @@ Explanation of "Start" and "End" columns:
 
 -o / --outdir: output directory;
   Default value: 'combinator-result'
+
+-f / --force: overwrite existing output files.
+  Disabled by default.
 ```
 
 ## Examples
