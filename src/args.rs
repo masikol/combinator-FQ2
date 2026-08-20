@@ -79,7 +79,7 @@ impl fmt::Debug for Args {
 #[derive(Parser)]
 #[command(
     name = "combinator_fq2",
-    version = "0.1.0",
+    version = "1.0.1",
     about = "A program to find adjacent contigs by matching their ends of length k.",
     long_about = None,
     author = "Maksim Sikolenko",

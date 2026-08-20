@@ -4,7 +4,7 @@ Combinator-FQ2 is a tool for detecting adjacent contigs and calculating the LQ c
 
 Combinator-FQ2 is a Rust re-implementation of a deprecated [combinator-FQ](https://github.com/masikol/combinator-FQ), which was written in Python.
 
-Latest version: `1.0.0`.
+Latest version: `1.0.1`.
 
 ## Description
 
@@ -46,7 +46,7 @@ Install the latest version of combinator-FQ2
 cargo install combinator_fq2
 ```
 
-Install the specific version (say, 1.0.0)
+Install the specific version (say, 1.0.1)
 ```bash
 cargo install combinator_fq2@1.0.0
 ```
